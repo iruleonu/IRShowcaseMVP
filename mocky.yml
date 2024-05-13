@@ -1,0 +1,16 @@
+sources:
+  include:
+    - ./IRShowcaseMVP
+  exclude:
+    - ./IRShowcaseMVPTests
+templates:
+  - SwiftyMocky/Mock.swifttemplate
+output: 
+  ./IRShowcaseMVPTests/Mock.generated.swift
+args:
+  testable:
+    - IRShowcaseMVP
+  import:
+    - Foundation
+    - Combine
+    - SwiftUI

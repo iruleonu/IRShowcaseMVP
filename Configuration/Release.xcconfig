@@ -1,0 +1,12 @@
+//
+//  Release.xcconfig
+//  IRShowcase
+//
+//  Created by Nuno Salvador on 21/03/2019.
+//  Copyright © 2019 Nuno Salvador. All rights reserved.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+OTHER_SWIFT_FLAGS = "-DRELEASE";
+APIBASEURL = https:/$()/raw.githubusercontent.com/iruleonu/IRCV
