@@ -22,6 +22,7 @@ protocol RandomNameSelectorPresenter {
     var viewModel: RandomNameSelectorViewModel { get }
     func onAppear()
     func onFemaleButtonTap()
+    func onRandomButtonTap()
     func onMaleButtonTap()
     func navigateToBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView
 }
@@ -30,6 +31,7 @@ final class RandomNameSelectorPresenterImpl: RandomNameSelectorPresenter {
     private(set) var routing: RandomNameSelectorScreenRouting
     private var dataProvider: FetchBabyNamePopularitiesProtocol
     var viewModel: RandomNameSelectorViewModel
+    private var currentGender: Gender
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -37,6 +39,7 @@ final class RandomNameSelectorPresenterImpl: RandomNameSelectorPresenter {
         self.routing = routing
         self.dataProvider = dataProvider
         self.viewModel = RandomNameSelectorViewModel()
+        currentGender = Gender.unknown
     }
 
     func onAppear() {
@@ -65,13 +68,20 @@ extension RandomNameSelectorPresenterImpl {
     }
 
     func onFemaleButtonTap() {
-        guard let babyNamePopularity = selectOneRandomFemale(fromBabyNames: self.viewModel.babyNamePopularities) else { return }
+        currentGender = .female
+    }
+
+    func onRandomButtonTap() {
+        guard currentGender != .unknown,
+            let babyNamePopularity = selectOneRandomName(fromBabyNames: self.viewModel.babyNamePopularities, gender: currentGender)
+        else {
+            return
+        }
         self.viewModel.selectedBabyNamePopularity = babyNamePopularity
     }
 
     func onMaleButtonTap() {
-        guard let babyNamePopularity = selectOneRandomMale(fromBabyNames: self.viewModel.babyNamePopularities) else { return }
-        self.viewModel.selectedBabyNamePopularity = babyNamePopularity
+        currentGender = .male
     }
 }
 

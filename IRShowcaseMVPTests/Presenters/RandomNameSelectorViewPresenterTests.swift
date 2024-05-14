@@ -119,6 +119,7 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
             .dropFirst()
             .sink { _ in
                 self.subject.onFemaleButtonTap()
+                self.subject.onRandomButtonTap()
             }
             .store(in: &cancellables)
 
