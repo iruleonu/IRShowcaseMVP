@@ -42,7 +42,13 @@ private struct ContentView: View {
                         if let selected = viewModel.selectedBabyNamePopularity {
                             proxy.scrollTo(selected)
                         }
-                    } onMaleButtonTapAction: {
+                    } onRandomButtonTapAction: {
+                        self.presenter.onRandomButtonTap()
+                        if let selected = viewModel.selectedBabyNamePopularity {
+                            proxy.scrollTo(selected)
+                        }
+                    }
+                    onMaleButtonTapAction: {
                         self.presenter.onMaleButtonTap()
                         if let selected = viewModel.selectedBabyNamePopularity {
                             proxy.scrollTo(selected)
@@ -74,11 +80,12 @@ private struct ErrorView: View {
 
 private struct ButtonsContainerView: View {
     let onFemaleButtonTapAction: () -> Void
+    let onRandomButtonTapAction: () -> Void
     let onMaleButtonTapAction: () -> Void
 
     var body: some View {
         VStack() {
-            Text("Tap on the next buttons to select one name randomly by gender")
+            Text("Tap on a gender and then tap on 'Random pick' to choose a name randomly with that gender")
                 .font(.headline)
                 .padding([.leading, .trailing], 15)
                 .padding(.top, 15)
@@ -86,6 +93,11 @@ private struct ButtonsContainerView: View {
             HStack(spacing: 30) {
                 Button("Female") {
                     onFemaleButtonTapAction()
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Random pick") {
+                    onRandomButtonTapAction()
                 }
                 .buttonStyle(.borderedProminent)
 
