@@ -34,12 +34,21 @@ extension BabyNamePopularityDataContainer: Equatable {
 
 extension BabyNamePopularityDataContainer {
     var babyNamePopularityRepresentation: [BabyNamePopularity] {
-        var aux: [BabyNamePopularity] = []
+        var aux: Set<BabyNamePopularity> = Set()
 
         for elem in self.data {
-            aux.append(BabyNamePopularity(yearOfBirth: Int(elem[4])!, gender: Gender(rawValue: elem[5]) ?? .unknown, ethnicity: elem[6], name: elem[7], numberOfBabiesWithSameName: Int(elem[8])!, nameRank: Int(elem[9])!))
+            aux.insert(
+                BabyNamePopularity(
+                    yearOfBirth: Int(elem[4])!,
+                    gender: Gender(rawValue: elem[5]) ?? .unknown,
+                    ethnicity: elem[6],
+                    name: elem[7],
+                    numberOfBabiesWithSameName: Int(elem[8])!,
+                    nameRank: Int(elem[9])!
+                )
+            )
         }
 
-        return aux
+        return Array(aux)
     }
 }
