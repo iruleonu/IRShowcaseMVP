@@ -37,7 +37,7 @@ extension PersistenceLayerImpl: PersistenceLayerLoad {
         switch resource {
         case .babyNamePopularities:
             return Future { promise in
-                let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
                 guard let casted = babyNamePopularities as? T else {
                     promise(.failure(PersistenceLayerError.casting))
                     return

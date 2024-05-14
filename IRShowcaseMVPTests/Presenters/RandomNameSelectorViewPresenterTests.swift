@@ -37,8 +37,8 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
         Given(
             dataProviderMock,
             .fetchBabyNamePopularities(willProduce: { stubber in
-                let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                let publisher = CurrentValueSubject<[BabyNamePopularity], Error>(babyNamePopularities)
+                let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, Error>(babyNamePopularities)
                 stubber.return(publisher.eraseToAnyPublisher())
             })
         )
@@ -70,7 +70,7 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
         Given(
             dataProviderMock,
             .fetchBabyNamePopularities(willProduce: { stubber in
-                let passthroughSubject = PassthroughSubject<[BabyNamePopularity], Error>()
+                let passthroughSubject = PassthroughSubject<BabyNamePopularityDataContainer, Error>()
                 stubber.return(passthroughSubject.eraseToAnyPublisher())
                 passthroughSubject.send(completion: .failure(DataProviderError.noConnectivity))
             })
@@ -104,8 +104,8 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
         Given(
             dataProviderMock,
             .fetchBabyNamePopularities(willProduce: { stubber in
-                let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                let publisher = CurrentValueSubject<[BabyNamePopularity], Error>(babyNamePopularities)
+                let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, Error>(babyNamePopularities)
                 stubber.return(publisher.eraseToAnyPublisher())
             })
         )

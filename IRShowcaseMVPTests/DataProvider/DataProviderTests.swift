@@ -17,10 +17,10 @@ import Combine
 class DataProvidersTests: QuickSpec {
     override class func spec() {
         describe("DataProvidersTests") {
-            var localDataProvider: DataProvider<[BabyNamePopularity]>!
-            var remoteDataProvider: DataProvider<[BabyNamePopularity]>!
-            var hybridLocalFirstDataProvider: DataProvider<[BabyNamePopularity]>!
-            var hybridRemoteFirstDataProvider: DataProvider<[BabyNamePopularity]>!
+            var localDataProvider: DataProvider<BabyNamePopularityDataContainer>!
+            var remoteDataProvider: DataProvider<BabyNamePopularityDataContainer>!
+            var hybridLocalFirstDataProvider: DataProvider<BabyNamePopularityDataContainer>!
+            var hybridRemoteFirstDataProvider: DataProvider<BabyNamePopularityDataContainer>!
             let network = APIServiceMock()
             let persistence = PersistenceLayerMock()
             var cancellables: Set<AnyCancellable>!
@@ -30,10 +30,10 @@ class DataProvidersTests: QuickSpec {
                 let remoteConfig = DataProviderConfiguration.remoteOnly
                 let hybridLocalConfig = DataProviderConfiguration.localIfErrorUseRemote
                 let hybridRemoteConfig = DataProviderConfiguration.remoteIfErrorUseLocal
-                let ldp: DataProvider<[BabyNamePopularity]> = DataProviderBuilder.makeDataProvider(config: localConfig, network: network, persistence: persistence)
-                let rdp: DataProvider<[BabyNamePopularity]> = DataProviderBuilder.makeDataProvider(config: remoteConfig, network: network, persistence: persistence)
-                let hldp: DataProvider<[BabyNamePopularity]> = DataProviderBuilder.makeDataProvider(config: hybridLocalConfig, network: network, persistence: persistence)
-                let hrdp: DataProvider<[BabyNamePopularity]> = DataProviderBuilder.makeDataProvider(config: hybridRemoteConfig, network: network, persistence: persistence)
+                let ldp: DataProvider<BabyNamePopularityDataContainer> = DataProviderBuilder.makeDataProvider(config: localConfig, network: network, persistence: persistence)
+                let rdp: DataProvider<BabyNamePopularityDataContainer> = DataProviderBuilder.makeDataProvider(config: remoteConfig, network: network, persistence: persistence)
+                let hldp: DataProvider<BabyNamePopularityDataContainer> = DataProviderBuilder.makeDataProvider(config: hybridLocalConfig, network: network, persistence: persistence)
+                let hrdp: DataProvider<BabyNamePopularityDataContainer> = DataProviderBuilder.makeDataProvider(config: hybridRemoteConfig, network: network, persistence: persistence)
                 localDataProvider = ldp
                 remoteDataProvider = rdp
                 hybridLocalFirstDataProvider = hldp
@@ -57,7 +57,7 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
                             var data: Data? = nil
                             do {
                                 let jsonData = try JSONEncoder().encode(babyNamePopularities)
@@ -85,7 +85,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(beGreaterThan(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -128,8 +128,8 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(persistence, .fetchResource(.any, willReturn: {
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                            let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>(babyNamePopularities)
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(babyNamePopularities)
                             return publisher.eraseToAnyPublisher()
                         }()
                         ))
@@ -145,7 +145,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(beGreaterThan(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -156,7 +156,7 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(persistence, .fetchResource(.any, willReturn: {
-                            let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>([])
+                            let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
                             publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "No known resource"))))
                             return publisher.eraseToAnyPublisher()
                         }()
@@ -187,8 +187,8 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
                         
                         Given(persistence, .fetchResource(.any, willReturn: {
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                            let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>(babyNamePopularities)
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(babyNamePopularities)
                             return publisher.eraseToAnyPublisher()
                         }()
                         ))
@@ -196,7 +196,7 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
                             var data: Data? = nil
                             do {
                                 let jsonData = try JSONEncoder().encode(babyNamePopularities)
@@ -225,7 +225,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(beGreaterThan(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -236,7 +236,7 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(persistence, .fetchResource(.any, willReturn: {
-                            let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>([])
+                            let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
                             publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))))
                             return publisher.eraseToAnyPublisher()
                         }()
@@ -269,8 +269,8 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(persistence, .fetchResource(.any, willReturn: {
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                            let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>(babyNamePopularities)
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(babyNamePopularities)
                             return publisher.eraseToAnyPublisher()
                         }()
                         ))
@@ -293,7 +293,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(beGreaterThan(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -306,7 +306,7 @@ class DataProvidersTests: QuickSpec {
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>([])
+                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
                                 publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))))
                                 return publisher.eraseToAnyPublisher()
                             }()
@@ -315,7 +315,7 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
                             var data: Data? = nil
                             do {
                                 let jsonData = try JSONEncoder().encode(babyNamePopularities)
@@ -343,7 +343,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(beGreaterThan(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -356,7 +356,7 @@ class DataProvidersTests: QuickSpec {
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>([])
+                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
                                 return publisher.eraseToAnyPublisher()
                             }()
                         ))
@@ -364,7 +364,7 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
                             var data: Data? = nil
                             do {
                                 let jsonData = try JSONEncoder().encode(babyNamePopularities)
@@ -392,7 +392,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(beGreaterThan(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -409,8 +409,8 @@ class DataProvidersTests: QuickSpec {
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                                let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>(babyNamePopularities)
+                                let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(babyNamePopularities)
                                 return publisher.eraseToAnyPublisher()
                             }()
                         ))
@@ -418,7 +418,7 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
                             var data: Data? = nil
                             do {
                                 let jsonData = try JSONEncoder().encode(babyNamePopularities)
@@ -446,7 +446,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(beGreaterThan(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -459,7 +459,7 @@ class DataProvidersTests: QuickSpec {
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>([])
+                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
                                 publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))))
                                 return publisher.eraseToAnyPublisher()
                             }()
@@ -495,8 +495,8 @@ class DataProvidersTests: QuickSpec {
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                                let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>(babyNamePopularities)
+                                let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(babyNamePopularities)
                                 return publisher.eraseToAnyPublisher()
                             }()
                         ))
@@ -519,7 +519,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(beGreaterThan(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -532,7 +532,7 @@ class DataProvidersTests: QuickSpec {
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>([])
+                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
                                 publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))))
                                 return publisher.eraseToAnyPublisher()
                             }()
@@ -541,7 +541,7 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
                             var data: Data? = nil
                             do {
                                 let jsonData = try JSONEncoder().encode(babyNamePopularities)
@@ -569,7 +569,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(beGreaterThan(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -582,8 +582,8 @@ class DataProvidersTests: QuickSpec {
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let publisher = CurrentValueSubject<[BabyNamePopularity], PersistenceLayerError>([])
-                                publisher.send([])
+                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
+                                publisher.send(.init(data: []))
                                 return publisher.eraseToAnyPublisher()
                             }()
                         ))
@@ -591,7 +591,7 @@ class DataProvidersTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
                             var data: Data? = nil
                             do {
                                 let jsonData = try JSONEncoder().encode(babyNamePopularities)
@@ -619,7 +619,7 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.count).to(equal(0))
+                                    expect(values.0.babyNamePopularityRepresentation.count).to(equal(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
