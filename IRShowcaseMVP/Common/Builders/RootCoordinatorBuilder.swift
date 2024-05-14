@@ -24,8 +24,8 @@ struct RootCoordinatorBuilder: RootCoordinatorChildBuilders {
     func makeMainScreen() -> UIViewController {
         let network = APIServiceBuilder.make()
         let persistence = PersistenceLayerBuilder.make()
-        let dataProvider: DataProvider<[BabyNamePopularity]> = DataProviderBuilder.makeDataProvider(
-            config: .remoteIfErrorUseLocal,
+        let dataProvider: DataProvider<BabyNamePopularityDataContainer> = DataProviderBuilder.makeDataProvider(
+            config: .localOnly,
             network: network,
             persistence: persistence
         )

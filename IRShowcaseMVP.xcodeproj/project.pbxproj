@@ -47,6 +47,8 @@
 		271701F82BF2530600F68012 /* NetworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 271701F72BF2530600F68012 /* NetworkTests.swift */; };
 		271701FA2BF2912000F68012 /* PersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 271701F92BF2912000F68012 /* PersistenceTests.swift */; };
 		271701FC2BF2980500F68012 /* DataProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 271701FB2BF2980500F68012 /* DataProviderTests.swift */; };
+		2734458B2BF3F08100D4E558 /* BabyNamePopularityDataContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2734458A2BF3F08100D4E558 /* BabyNamePopularityDataContainer.swift */; };
+		2734458E2BF40CA100D4E558 /* Decodables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2734458D2BF40CA100D4E558 /* Decodables.swift */; };
 		27B75C7322B6F9E60084BCCD /* AnySubscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B75C7222B6F9E60084BCCD /* AnySubscription.swift */; };
 		27B75C7C22B716630084BCCD /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 27B75C7B22B716630084BCCD /* README.md */; };
 		27B75C7E22B7187F0084BCCD /* ReadFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B75C7D22B7187F0084BCCD /* ReadFile.swift */; };
@@ -120,6 +122,8 @@
 		271701F72BF2530600F68012 /* NetworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTests.swift; sourceTree = "<group>"; };
 		271701F92BF2912000F68012 /* PersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceTests.swift; sourceTree = "<group>"; };
 		271701FB2BF2980500F68012 /* DataProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataProviderTests.swift; sourceTree = "<group>"; };
+		2734458A2BF3F08100D4E558 /* BabyNamePopularityDataContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BabyNamePopularityDataContainer.swift; sourceTree = "<group>"; };
+		2734458D2BF40CA100D4E558 /* Decodables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Decodables.swift; sourceTree = "<group>"; };
 		27B75C7222B6F9E60084BCCD /* AnySubscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnySubscription.swift; sourceTree = "<group>"; };
 		27B75C7B22B716630084BCCD /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		27B75C7D22B7187F0084BCCD /* ReadFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadFile.swift; sourceTree = "<group>"; };
@@ -301,6 +305,14 @@
 			path = DataProvider;
 			sourceTree = "<group>";
 		};
+		2734458C2BF40C9500D4E558 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				2734458D2BF40CA100D4E558 /* Decodables.swift */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
 		2781DA0D2BEE72F20092A7F4 /* DataSources */ = {
 			isa = PBXGroup;
 			children = (
@@ -406,6 +418,7 @@
 		27FB6F7722B2BF7100D0A1CF /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				2734458C2BF40C9500D4E558 /* Helpers */,
 				2781DA0D2BEE72F20092A7F4 /* DataSources */,
 				27FB6FA922B2C00C00D0A1CF /* Builders */,
 				27FB6F7A22B2C00C00D0A1CF /* Components */,
@@ -485,6 +498,7 @@
 			children = (
 				2717018F2BF0AD6400F68012 /* BabyNamePopularity.swift */,
 				271701912BF0ADA800F68012 /* Gender.swift */,
+				2734458A2BF3F08100D4E558 /* BabyNamePopularityDataContainer.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -675,6 +689,7 @@
 				27FB6FBA22B2C00C00D0A1CF /* Resource.swift in Sources */,
 				2717018E2BF0AD2E00F68012 /* APIService+Fetchables.swift in Sources */,
 				27FB6FBE22B2C00C00D0A1CF /* PersistenceLayerErrors.swift in Sources */,
+				2734458B2BF3F08100D4E558 /* BabyNamePopularityDataContainer.swift in Sources */,
 				271701A02BF0B37400F68012 /* RandomNameSelectorView.swift in Sources */,
 				27FB6FED22B2C56900D0A1CF /* AppService.swift in Sources */,
 				271701E22BF1FF1400F68012 /* Foundation.swift in Sources */,
@@ -701,6 +716,7 @@
 				27FB6F5722B2B58200D0A1CF /* SceneDelegate.swift in Sources */,
 				271701972BF0B05700F68012 /* RandomNameSelectorScreenBuilder.swift in Sources */,
 				271701B92BF0EEE200F68012 /* JSONEncoder.swift in Sources */,
+				2734458E2BF40CA100D4E558 /* Decodables.swift in Sources */,
 				27FB6FD522B2C00C00D0A1CF /* RootCoordinator.swift in Sources */,
 				27FB6FC122B2C00C00D0A1CF /* NSObject.swift in Sources */,
 				271701BB2BF1001C00F68012 /* PersistenceLayer+SaveExampleData.swift in Sources */,
@@ -869,7 +885,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 27FB6FE422B2C16600D0A1CF /* Debug.xcconfig */;
 			buildSettings = {
-				APIBASEURL = "https:/$()/raw.githubusercontent.com/iruleonu/IRShowcaseMVP";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				ENABLE_PREVIEWS = YES;
@@ -890,7 +905,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 27FB6FE522B2C16700D0A1CF /* Release.xcconfig */;
 			buildSettings = {
-				APIBASEURL = "https:/$()/raw.githubusercontent.com/iruleonu/IRShowcaseMVP";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				ENABLE_PREVIEWS = YES;

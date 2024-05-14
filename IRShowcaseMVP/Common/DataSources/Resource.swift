@@ -19,19 +19,38 @@ extension Resource {
         case .unknown:
             return (.GET, "", [:])
         case .babyNamePopularities:
-            return (.GET, "/", [:])
+            return (.GET, "/views/25th-nujf/rows.json", [:])
         }
     }
 }
 
 extension Resource {
     func buildUrlRequest(apiBaseUrl: URL) -> URLRequest {
+        return buildUrlRequest(apiBaseUrl: apiBaseUrl, authBearer: nil, contentType: nil)
+    }
+
+    func buildUrlRequest(apiBaseUrl: URL, authBearer: String?, contentType: String?) -> URLRequest {
         var components = URLComponents(url: apiBaseUrl, resolvingAgainstBaseURL: false)
         components?.queryItems = Resource.buildQueryItems(requestProperties.query)
         components?.path = requestProperties.path
         let finalURL = components?.url ?? apiBaseUrl
         let request = NSMutableURLRequest(url: finalURL)
         request.httpMethod = requestProperties.method.rawValue
+
+        if let authBearer = authBearer {
+            request.setValue(
+                "Bearer \(authBearer)",
+                forHTTPHeaderField: "Authentication"
+            )
+        }
+
+        if let contentType = contentType {
+            request.setValue(
+                contentType,
+                forHTTPHeaderField: "Content-Type"
+            )
+        }
+
         return request as URLRequest
     }
 

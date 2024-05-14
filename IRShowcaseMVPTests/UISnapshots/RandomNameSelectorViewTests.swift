@@ -91,11 +91,11 @@ private extension RandomNameSelectorViewModel {
     static func stub(selectFirstName: Bool = false, showErrorView: Bool = false) -> RandomNameSelectorViewModel {
         let vm = RandomNameSelectorViewModel()
 
-        let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
-        vm.babyNamePopularities = babyNamePopularities
+        let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+        vm.babyNamePopularities = babyNamePopularities.babyNamePopularityRepresentation
 
         if (selectFirstName) {
-            vm.selectedBabyNamePopularity = babyNamePopularities.first
+            vm.selectedBabyNamePopularity = babyNamePopularities.babyNamePopularityRepresentation.first
         }
 
         vm.showErrorView = showErrorView

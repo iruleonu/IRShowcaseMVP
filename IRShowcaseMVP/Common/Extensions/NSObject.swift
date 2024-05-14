@@ -9,12 +9,24 @@
 import Foundation
 
 extension NSObject {
+    public static func configurationValue(for configKey: String) -> String? {
+        return Bundle.main.infoDictionary?[configKey] as? String
+    }
+}
+
+extension NSObject {
     @objc public static var APIBaseUrl: String? {
         guard NSClassFromString("XCTestCase") == nil else { return nil }
         return configurationValue(for: "APIBaseURL")
     }
-    
-    public static func configurationValue(for configKey: String) -> String? {
-        return Bundle.main.infoDictionary?[configKey] as? String
+
+    @objc public static var APIAuthBearerKey: String? {
+        guard NSClassFromString("XCTestCase") == nil else { return nil }
+        return configurationValue(for: "APIAuthBearerKey")
+    }
+
+    @objc public static var APIUserAgent: String? {
+        guard NSClassFromString("XCTestCase") == nil else { return nil }
+        return configurationValue(for: "APIUserAgent")
     }
 }

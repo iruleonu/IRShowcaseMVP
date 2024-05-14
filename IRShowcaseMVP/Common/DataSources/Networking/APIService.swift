@@ -44,19 +44,33 @@ protocol APIBaseUrlProtocol {
     var apiBaseUrl: URL { get }
 }
 
+protocol APIAuthBearerKeyProtocol {
+    var apiAuthBearerKey: String { get }
+}
+
+protocol APIUserAgentProtocol {
+    var apiUserAgent: String { get }
+}
+
 protocol APIURLRequestProtocol {
     func buildUrlRequest(resource: Resource) -> URLRequest
 }
 
-protocol ServerConfigProtocol: APIBaseUrlProtocol {
-    
-}
+protocol ServerConfigProtocol: APIBaseUrlProtocol, APIAuthBearerKeyProtocol, APIUserAgentProtocol {}
 
 struct ServerConfig: ServerConfigProtocol {
-    var apiBaseUrl: URL
-    
-    init(apiBaseUrl: String = NSObject.APIBaseUrl ?? "") {
+    let apiBaseUrl: URL
+    let apiAuthBearerKey: String
+    let apiUserAgent: String
+
+    init(
+        apiBaseUrl: String = NSObject.APIBaseUrl ?? "",
+        apiAuthBearerKey: String = NSObject.APIAuthBearerKey ?? "",
+        apiUserAgent: String = NSObject.APIUserAgent ?? ""
+    ) {
         self.apiBaseUrl = URL(string: apiBaseUrl)!
+        self.apiAuthBearerKey = apiAuthBearerKey
+        self.apiUserAgent = apiUserAgent
     }
 }
 
@@ -72,7 +86,21 @@ struct APIServiceImpl: APIService {
     
     init(serverConfig sc: ServerConfigProtocol = ServerConfig()) {
         serverConfig = sc
-        session = URLSession.shared
+
+        let sessionConfiguration = URLSessionConfiguration.default
+        
+        var httpAdditionalHeaders: [String : String] = [:]
+        if serverConfig.apiAuthBearerKey.count > 0 {
+            httpAdditionalHeaders["Authorization"] = "Bearer \(serverConfig.apiAuthBearerKey)"
+        }
+        if serverConfig.apiUserAgent.count > 0 {
+            httpAdditionalHeaders["User-Agent"] = serverConfig.apiUserAgent
+        }
+        if (httpAdditionalHeaders.count > 0) {
+            sessionConfiguration.httpAdditionalHeaders = httpAdditionalHeaders
+        }
+
+        session = URLSession(configuration: sessionConfiguration)
     }
 }
 
@@ -101,6 +129,12 @@ extension APIServiceImpl: URLRequestFetchable {
 extension APIServiceImpl: APIBaseUrlProtocol {
     var apiBaseUrl: URL {
         return serverConfig.apiBaseUrl
+    }
+}
+
+extension APIServiceImpl: APIAuthBearerKeyProtocol {
+    var apiAuthBearerKey: String {
+        return serverConfig.apiAuthBearerKey
     }
 }
 

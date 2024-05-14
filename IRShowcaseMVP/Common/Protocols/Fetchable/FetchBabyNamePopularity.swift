@@ -11,5 +11,5 @@ import Combine
 
 // sourcery: AutoMockable
 protocol FetchBabyNamePopularitiesProtocol {
-    func fetchBabyNamePopularities() -> AnyPublisher<[BabyNamePopularity], Error>
+    func fetchBabyNamePopularities() -> AnyPublisher<BabyNamePopularityDataContainer, Error>
 }

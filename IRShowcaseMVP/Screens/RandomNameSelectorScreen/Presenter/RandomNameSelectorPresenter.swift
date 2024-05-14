@@ -45,15 +45,15 @@ final class RandomNameSelectorPresenterImpl: RandomNameSelectorPresenter {
 
     private func fetchPopularBabyNames() {
         dataProvider.fetchBabyNamePopularities()
-            .catch({ [weak self] error -> Empty<[BabyNamePopularity], Never> in
-                guard let self = self else { return Empty<[BabyNamePopularity], Never>() }
+            .catch({ [weak self] error -> Empty<BabyNamePopularityDataContainer, Never> in
+                guard let self = self else { return Empty<BabyNamePopularityDataContainer, Never>() }
                 self.viewModel.showErrorView = true
-                return Empty<[BabyNamePopularity], Never>()
+                return Empty<BabyNamePopularityDataContainer, Never>()
             })
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] babyNamePopularities in
+            .sink { [weak self] babyNamePopularitiesDataContainer in
                 guard let self = self else { return }
-                self.viewModel.babyNamePopularities = babyNamePopularities
+                self.viewModel.babyNamePopularities = babyNamePopularitiesDataContainer.babyNamePopularityRepresentation
             }
             .store(in: &cancellables)
     }
