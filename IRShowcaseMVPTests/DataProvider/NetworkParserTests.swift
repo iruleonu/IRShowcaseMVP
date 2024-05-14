@@ -25,8 +25,8 @@ class NetworkParserTests: XCTestCase {
         let expectation = self.expectation(description: "Expected to decode/encode properly")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
-        let babyNamePopularities: [BabyNamePopularity] = ReadFile.object(from: "babyNamePopularities", extension: "json")
-        XCTAssertTrue(babyNamePopularities.count == 101)
+        let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+        XCTAssertTrue(babyNamePopularities.babyNamePopularityRepresentation.count > 0)
         var data: Data? = nil
 
         do {
@@ -36,14 +36,14 @@ class NetworkParserTests: XCTestCase {
 
         XCTAssertNotNil(data)
 
-        let dpHandlersBuilder = DataProviderHandlersBuilder<[BabyNamePopularity]>()
+        let dpHandlersBuilder = DataProviderHandlersBuilder<BabyNamePopularityDataContainer>()
         let networkParser = dpHandlersBuilder.standardNetworkParserHandler
 
         networkParser(data!)
             .sink { completion in
                 // do nothing
             } receiveValue: { babyNames in
-                XCTAssertTrue(babyNames.count == babyNamePopularities.count)
+                XCTAssertTrue(babyNames.babyNamePopularityRepresentation.count == babyNamePopularities.babyNamePopularityRepresentation.count)
                 expectation.fulfill()
             }
             .store(in: &cancellables)

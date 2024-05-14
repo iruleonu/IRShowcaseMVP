@@ -10,10 +10,10 @@ import Foundation
 import Combine
 
 extension DataProvider: FetchBabyNamePopularitiesProtocol {
-    func fetchBabyNamePopularities() -> AnyPublisher<[BabyNamePopularity], Error> {
+    func fetchBabyNamePopularities() -> AnyPublisher<BabyNamePopularityDataContainer, Error> {
         fetchStuff(resource: .babyNamePopularities)
             .tryMap({ elems, _ in
-                if let cast = elems as? [BabyNamePopularity] {
+                if let cast = elems as? BabyNamePopularityDataContainer {
                     return cast
                 }
                 throw DataProviderError.casting

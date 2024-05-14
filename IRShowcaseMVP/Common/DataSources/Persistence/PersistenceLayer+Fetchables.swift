@@ -10,7 +10,7 @@ import Foundation
 import Combine
 
 extension PersistenceLayerImpl: FetchBabyNamePopularitiesProtocol {
-    func fetchBabyNamePopularities() -> AnyPublisher<[BabyNamePopularity], Error> {
+    func fetchBabyNamePopularities() -> AnyPublisher<BabyNamePopularityDataContainer, Error> {
         return self.fetchResource(.babyNamePopularities)
             .mapError({ PersistenceLayerError.persistence(error: $0) })
             .eraseToAnyPublisher()

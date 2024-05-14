@@ -9,4 +9,6 @@
 // Configuration settings file format documentation can be found at:
 // https://help.apple.com/xcode/#/dev745c5c974
 OTHER_SWIFT_FLAGS = "-DRELEASE";
-APIBASEURL = https:/$()/raw.githubusercontent.com/iruleonu/IRCV
+APIBASEURL = https:/$()/data.cityofnewyork.us/api
+APIAuthBearerKey = ;
+APIUserAgent = Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36
