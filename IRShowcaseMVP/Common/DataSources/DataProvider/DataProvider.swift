@@ -155,22 +155,16 @@ extension DataProvider: Fetchable {
         // Guard for persistenceFirst - Load persisted values first, fallback to remote when the local fetch fails
         guard config.remoteFirst else {
             return persistenceLoadProducer(resource: input)
-                .flatMap({ persistenceValue in
-                    remoteProducer(resource: input)
-                        .catch { _ in Just<(T, DataProviderSource)>(persistenceValue) }
-                        .eraseToAnyPublisher()
-                })
+                .merge(with: remoteProducer(resource: input).catch { _ in Empty<(T, DataProviderSource), DataProviderError>() }.eraseToAnyPublisher())
                 .catch({ _ in remoteProducer(resource: input) }).eraseToAnyPublisher()
+                .eraseToAnyPublisher()
         }
 
         // Load remotely first, fallback to the persisted values when the remote fetch fails
         return remoteProducer(resource: input)
-            .flatMap({ remoteValue in
-                persistenceLoadProducer(resource: input)
-                    .catch { _ in Just<(T, DataProviderSource)>(remoteValue) }
-                    .eraseToAnyPublisher()
-            })
-            .catch({ _ in persistenceLoadProducer(resource: input).eraseToAnyPublisher() }).eraseToAnyPublisher()
+            .merge(with: persistenceLoadProducer(resource: input).catch { _ in Empty<(T, DataProviderSource), DataProviderError>() }.eraseToAnyPublisher())
+            .catch({ _ in persistenceLoadProducer(resource: input) }).eraseToAnyPublisher()
+            .eraseToAnyPublisher()
     }
 
     private func fetchForTypeLocal(input: Resource) -> AnyPublisher<(T, DataProviderSource), DataProviderError> {
