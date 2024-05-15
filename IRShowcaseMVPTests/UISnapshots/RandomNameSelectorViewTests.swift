@@ -10,6 +10,8 @@ import Foundation
 import XCTest
 import SwiftUI
 import SwiftyMocky
+import OrderedCollections
+
 @testable import IRShowcaseMVP
 
 final class RandomNameSelectorViewTests: TestCase {
@@ -91,11 +93,12 @@ private extension RandomNameSelectorViewModel {
     static func stub(selectFirstName: Bool = false, showErrorView: Bool = false) -> RandomNameSelectorViewModel {
         let vm = RandomNameSelectorViewModel()
 
-        let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-        vm.babyNamePopularities = babyNamePopularities.babyNamePopularityRepresentation
+        let babyNamePopularitiesDataContainer: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+        let orderedSet = OrderedSet(babyNamePopularitiesDataContainer.babyNamePopularityRepresentation)
+        vm.babyNamePopularities = Array(orderedSet)
 
         if (selectFirstName) {
-            vm.selectedBabyNamePopularity = babyNamePopularities.babyNamePopularityRepresentation.first
+            vm.selectedBabyNamePopularity = orderedSet.first
         }
 
         vm.showErrorView = showErrorView

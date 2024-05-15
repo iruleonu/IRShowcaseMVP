@@ -49,6 +49,7 @@
 		271701FC2BF2980500F68012 /* DataProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 271701FB2BF2980500F68012 /* DataProviderTests.swift */; };
 		2734458B2BF3F08100D4E558 /* BabyNamePopularityDataContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2734458A2BF3F08100D4E558 /* BabyNamePopularityDataContainer.swift */; };
 		2734458E2BF40CA100D4E558 /* Decodables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2734458D2BF40CA100D4E558 /* Decodables.swift */; };
+		27784E9B2BF5049E00FC059B /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 27784E9A2BF5049E00FC059B /* OrderedCollections */; };
 		27B75C7322B6F9E60084BCCD /* AnySubscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B75C7222B6F9E60084BCCD /* AnySubscription.swift */; };
 		27B75C7C22B716630084BCCD /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 27B75C7B22B716630084BCCD /* README.md */; };
 		27B75C7E22B7187F0084BCCD /* ReadFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B75C7D22B7187F0084BCCD /* ReadFile.swift */; };
@@ -166,6 +167,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27784E9B2BF5049E00FC059B /* OrderedCollections in Frameworks */,
 				271701F32BF2527800F68012 /* Quick in Frameworks */,
 				271701F62BF2529500F68012 /* Nimble in Frameworks */,
 				271701D12BF105F600F68012 /* SwiftyMocky in Frameworks */,
@@ -578,6 +580,7 @@
 				271701DC2BF1078F00F68012 /* SnapshotTesting */,
 				271701F22BF2527800F68012 /* Quick */,
 				271701F52BF2529500F68012 /* Nimble */,
+				27784E9A2BF5049E00FC059B /* OrderedCollections */,
 			);
 			productName = IRCVTests;
 			productReference = 27FB6F6722B2B58400D0A1CF /* IRShowcaseMVPTests.xctest */;
@@ -616,6 +619,7 @@
 				271701DB2BF1078F00F68012 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
 				271701F12BF2527800F68012 /* XCRemoteSwiftPackageReference "Quick" */,
 				271701F42BF2529500F68012 /* XCRemoteSwiftPackageReference "Nimble" */,
+				27784E992BF5049E00FC059B /* XCRemoteSwiftPackageReference "swift-collections" */,
 			);
 			productRefGroup = 27FB6F5222B2B58200D0A1CF /* Products */;
 			projectDirPath = "";
@@ -1030,6 +1034,14 @@
 				kind = branch;
 			};
 		};
+		27784E992BF5049E00FC059B /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1052,6 +1064,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 271701F42BF2529500F68012 /* XCRemoteSwiftPackageReference "Nimble" */;
 			productName = Nimble;
+		};
+		27784E9A2BF5049E00FC059B /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 27784E992BF5049E00FC059B /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
