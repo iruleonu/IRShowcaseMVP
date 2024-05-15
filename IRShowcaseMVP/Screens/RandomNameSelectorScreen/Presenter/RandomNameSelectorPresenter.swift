@@ -56,7 +56,8 @@ final class RandomNameSelectorPresenterImpl: RandomNameSelectorPresenter {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] babyNamePopularitiesDataContainer in
                 guard let self = self else { return }
-                self.viewModel.babyNamePopularities = babyNamePopularitiesDataContainer.babyNamePopularityRepresentation
+                let noDuplicates = Set(self.viewModel.babyNamePopularities).union(Set(babyNamePopularitiesDataContainer.babyNamePopularityRepresentation))
+                self.viewModel.babyNamePopularities = Array(noDuplicates)
             }
             .store(in: &cancellables)
     }

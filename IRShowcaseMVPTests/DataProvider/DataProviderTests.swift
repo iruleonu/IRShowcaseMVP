@@ -392,8 +392,15 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
-                                    done()
+                                    let (value, source) = values
+
+                                    switch source {
+                                    case .local:
+                                        expect(value.babyNamePopularityRepresentation.count).to(equal(0))
+                                    case .remote:
+                                        expect(value.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
+                                        done()
+                                    }
                                 }
                                 .store(in: &cancellables)
                         })
@@ -619,8 +626,15 @@ class DataProvidersTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.babyNamePopularityRepresentation.count).to(equal(0))
-                                    done()
+                                    let (value, source) = values
+
+                                    switch (source) {
+                                    case .local:
+                                        expect(value.babyNamePopularityRepresentation.count).to(equal(0))
+                                    case .remote:
+                                        expect(value.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
+                                        done()
+                                    }
                                 }
                                 .store(in: &cancellables)
                         })
