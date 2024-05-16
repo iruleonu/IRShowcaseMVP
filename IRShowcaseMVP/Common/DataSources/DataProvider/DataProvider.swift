@@ -36,32 +36,42 @@ protocol DataProviderProtocol {
 }
 
 struct DataProviderConfiguration {
-    static let standard: DataProviderConfiguration = remoteIfErrorUseLocal
+    static let standard: DataProviderConfiguration = remoteOnErrorUseLocal
 
     static let localOnly: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: false, remoteFirst: false)
+        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: false, remoteFirst: false, sendMultipleValuesFromBothLayers: false)
     }()
 
     static let remoteOnly: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: false, remoteEnabled: true, remoteFirst: true)
+        return DataProviderConfiguration(persistenceEnabled: false, remoteEnabled: true, remoteFirst: true, sendMultipleValuesFromBothLayers: false)
     }()
 
-    static let localIfErrorUseRemote: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: false)
+    static let localOnErrorUseRemote: DataProviderConfiguration = {
+        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: false, sendMultipleValuesFromBothLayers: false)
     }()
 
-    static let remoteIfErrorUseLocal: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: true)
+    static let remoteOnErrorUseLocal: DataProviderConfiguration = {
+        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: true, sendMultipleValuesFromBothLayers: false)
+    }()
+    
+    static let localFirstThenRemote: DataProviderConfiguration = {
+        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: false, sendMultipleValuesFromBothLayers: true)
+    }()
+
+    static let remoteFirstThenLocal: DataProviderConfiguration = {
+        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: true, sendMultipleValuesFromBothLayers: true)
     }()
 
     let persistenceEnabled: Bool
     let remoteEnabled: Bool
     let remoteFirst: Bool
+    let sendMultipleValuesFromBothLayers: Bool
 
-    init(persistenceEnabled pe: Bool, remoteEnabled re: Bool, remoteFirst rf: Bool) {
+    init(persistenceEnabled pe: Bool, remoteEnabled re: Bool, remoteFirst rf: Bool, sendMultipleValuesFromBothLayers smvfbl: Bool) {
         persistenceEnabled = pe
         remoteEnabled = re
         remoteFirst = rf
+        sendMultipleValuesFromBothLayers = smvfbl
     }
 }
 
@@ -152,15 +162,31 @@ extension DataProvider: Fetchable {
         }
 
         // Hybrid
-        // Guard for persistenceFirst - Load persisted values first, fallback to remote when the local fetch fails
         guard config.remoteFirst else {
+            guard config.sendMultipleValuesFromBothLayers else {
+                // Fetch from the persistence layer and on error use remote
+                return persistenceLoadProducer(resource: input)
+                    .catch({ _ in remoteProducer(resource: input) }).eraseToAnyPublisher()
+                    .eraseToAnyPublisher()
+            }
+
+            // Fetch from the persistence layer and send the values.
+            // Then fetch remotely and send those values as well or empty if the remote fetch fails.
             return persistenceLoadProducer(resource: input)
                 .merge(with: remoteProducer(resource: input).catch { _ in Empty<(T, DataProviderSource), DataProviderError>() }.eraseToAnyPublisher())
                 .catch({ _ in remoteProducer(resource: input) }).eraseToAnyPublisher()
                 .eraseToAnyPublisher()
         }
 
-        // Load remotely first, fallback to the persisted values when the remote fetch fails
+        guard config.sendMultipleValuesFromBothLayers else {
+            // Fetch remotly and on error use the persistence layer
+            return remoteProducer(resource: input)
+                .catch({ _ in persistenceLoadProducer(resource: input) }).eraseToAnyPublisher()
+                .eraseToAnyPublisher()
+        }
+
+        // Firstly fetch from the remote and send the values.
+        // Then fetch from persistence layer and send those values as well or empty if the persistence layer fails.
         return remoteProducer(resource: input)
             .merge(with: persistenceLoadProducer(resource: input).catch { _ in Empty<(T, DataProviderSource), DataProviderError>() }.eraseToAnyPublisher())
             .catch({ _ in persistenceLoadProducer(resource: input) }).eraseToAnyPublisher()
