@@ -38,7 +38,7 @@ struct RootCoordinatorBuilder: RootCoordinatorChildBuilders {
         let network = APIServiceBuilder.make()
         let persistence = PersistenceLayerBuilder.make()
         let dataProvider: DataProvider<[BabyNamePopularity]> = DataProviderBuilder.makeDataProvider(
-            config: .remoteIfErrorUseLocal,
+            config: .remoteOnErrorUseLocal,
             network: network,
             persistence: persistence
         )
