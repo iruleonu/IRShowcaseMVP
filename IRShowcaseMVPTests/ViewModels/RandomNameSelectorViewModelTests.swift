@@ -1,5 +1,5 @@
 //
-//  RandomNameSelectorViewPresenterTests.swift
+//  RandomNameSelectorViewModelTests.swift
 //  IRShowcaseMVPTests
 //
 //  Created by Nuno Salvador on 13/05/2024.
@@ -14,7 +14,7 @@ import Combine
 
 @testable import IRShowcaseMVP
 
-final class RandomNameSelectorViewPresenterTests: TestCase {
+final class RandomNameSelectorViewModelTests: TestCase {
     private var subject: RandomNameSelectorViewModelImpl!
     private var cancellables: Set<AnyCancellable>!
 

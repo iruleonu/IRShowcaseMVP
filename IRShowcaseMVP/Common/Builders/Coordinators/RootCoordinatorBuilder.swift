@@ -13,7 +13,7 @@ import Combine
 
 protocol RootCoordinatorChildBuilders {
     func makeMainScreen() -> UIViewController
-    func makeDummyProductsListScreenInjectingHybridDataProviders() -> UIViewController
+    func makeDummyProductsListScreenInjectingHybridDataProvider() -> UIViewController
     func makePopularBabyNamesScreen() -> UIViewController
 }
 
@@ -22,8 +22,8 @@ struct RootCoordinatorBuilder: RootCoordinatorChildBuilders {
         return RootCoordinator(window: window, builders: self)
     }
     
+    // Example on how to inject the PersistenceLayer and the APIService
     func makeMainScreen() -> UIViewController {
-        // Example on how to inject the PersistenceLayer and the APIService
         let view = DummyProductsScreenBuilder().make(
             localDataProvider: PersistenceLayerBuilder.make(),
             remoteDataProvider: APIServiceBuilder.make()
@@ -31,24 +31,16 @@ struct RootCoordinatorBuilder: RootCoordinatorChildBuilders {
         return UIHostingController(rootView: view)
     }
     
-    // Example on how to inject the DataProviders with different configs to do the same as above
-    // The presenter can be modified to use only one DataProvider with a config = localOnErrorUseRemote
-    func makeDummyProductsListScreenInjectingHybridDataProviders() -> UIViewController {
-        let network = APIServiceBuilder.make()
-        let persistence = PersistenceLayerBuilder.make()
-        let localDataProvider: DataProvider<DummyProductDataContainer> = DataProviderBuilder.makeDataProvider(
-            config: .localOnly,
-            network: network,
-            persistence: persistence
-        )
-        let remoteDataProvider: DataProvider<DummyProductDataContainer> = DataProviderBuilder.makeDataProvider(
-            config: .remoteOnly,
-            network: network,
-            persistence: persistence
+    // Example on how to inject a hybrid DataProvider with different configs to do the same as above
+    // where it injects two different providers
+    func makeDummyProductsListScreenInjectingHybridDataProvider() -> UIViewController {
+        let hybridDataProvider: DataProvider<DummyProductDataContainer> = DataProviderBuilder.makeDataProvider(
+            config: .localOnErrorUseRemote,
+            network: APIServiceBuilder.make(),
+            persistence: PersistenceLayerBuilder.make()
         )
         let view = DummyProductsScreenBuilder().make(
-            localDataProvider: localDataProvider,
-            remoteDataProvider: remoteDataProvider
+            dataProvider: hybridDataProvider
         )
         return UIHostingController(rootView: view)
     }

@@ -67,8 +67,8 @@ final class DummyProductsViewModelImpl: DummyProductsViewModel {
             }, receiveValue: { [weak self] tuple in
                 guard let self = self else { return }
                 let (value, dataProviderSource) = tuple
-                self.observableObject.dummyProducts = value.products
                 self.localDataProvider.persistObjects(value) { _, _ in }
+                self.observableObject.dummyProducts = value.products
                 print("dataProviderSource: " + dataProviderSource.rawValue)
             })
             .store(in: &cancellables)

@@ -31,6 +31,15 @@ struct DummyProductsScreenBuilder {
         )
         return DummyProductsView(presenter: presenter)
     }
+
+    func make(dataProvider: DummyProductsLocalDataProvider) -> DummyProductsView {
+        let coordinator = DummyProductsScreenCoordinator(builders: self)
+        let presenter = DummyProductsWithHybridDataProviderViewModelImpl(
+            routing: coordinator,
+            dataProvider: dataProvider
+        )
+        return DummyProductsView(presenter: presenter)
+    }
 }
 
 extension DummyProductsScreenBuilder: DummyProductsScreenChildBuilders {
