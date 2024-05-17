@@ -15,7 +15,7 @@ struct DummyProductCell: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            AsyncImage(url: URL(string: "")) { phase in
+            AsyncImage(url: URL(string: dummyProduct.imageBasedOnProductRating)) { phase in
                 switch phase {
                 case .failure:
                     Image("placeholder")
