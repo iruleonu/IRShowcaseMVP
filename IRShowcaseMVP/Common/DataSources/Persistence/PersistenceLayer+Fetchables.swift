@@ -16,3 +16,14 @@ extension PersistenceLayerImpl: FetchBabyNamePopularitiesProtocol {
             .eraseToAnyPublisher()
     }
 }
+
+extension PersistenceLayerImpl: FetchDummyProductsProtocol {
+    func fetchDummyProducts() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
+        return self.fetchResource(.dummyProducts)
+            .mapError({ PersistenceLayerError.persistence(error: $0) })
+            .map({ ($0, .local) })
+            .eraseToAnyPublisher()
+    }
+}
+
+extension PersistenceLayerImpl: DummyProductsLocalDataProvider {}

@@ -28,3 +28,23 @@ extension APIServiceImpl: FetchBabyNamePopularitiesProtocol {
             .eraseToAnyPublisher()
     }
 }
+
+extension APIServiceImpl: FetchDummyProductsProtocol {
+    func fetchDummyProducts() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
+        func parseData(_ tuple: (Data, URLResponse)) throws -> DummyProductDataContainer {
+            do {
+                let (data, _) = tuple
+                let result = try JSONDecoder().decode(DummyProductDataContainer.self, from: data)
+                return result
+            } catch {
+                throw APIServiceError.parsing(error: error)
+            }
+        }
+
+        let urlRequest = Resource.dummyProducts.buildUrlRequest(apiBaseUrl: apiBaseUrl)
+        return session.fetchData(urlRequest)
+            .tryMap(parseData)
+            .map({ ($0, .remote) })
+            .eraseToAnyPublisher()
+    }
+}

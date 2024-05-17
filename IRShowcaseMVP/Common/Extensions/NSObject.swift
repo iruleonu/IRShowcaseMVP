@@ -20,6 +20,11 @@ extension NSObject {
         return configurationValue(for: "APIBaseURL")
     }
 
+    @objc public static var APIBabyNamePopularityBASEURL: String? {
+        guard NSClassFromString("XCTestCase") == nil else { return nil }
+        return configurationValue(for: "APIBabyNamePopularityBASEURL")
+    }
+
     @objc public static var APIAuthBearerKey: String? {
         guard NSClassFromString("XCTestCase") == nil else { return nil }
         return configurationValue(for: "APIAuthBearerKey")

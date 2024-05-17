@@ -21,7 +21,7 @@ protocol RandomNameSelectorScreenChildBuilders {
 struct RandomNameSelectorScreenBuilder {
     func make(dataProvider: FetchBabyNamePopularitiesProtocol) -> RandomNameSelectorView {
         let coordinator = RandomNameSelectorScreenCoordinator(builders: self, dataProvider: dataProvider)
-        let presenter = RandomNameSelectorPresenterImpl(routing: coordinator, dataProvider: dataProvider)
+        let presenter = RandomNameSelectorViewModelImpl(routing: coordinator, dataProvider: dataProvider)
         return RandomNameSelectorView(presenter: presenter)
     }
 }

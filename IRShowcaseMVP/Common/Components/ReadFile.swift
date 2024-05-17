@@ -10,8 +10,11 @@ import Foundation
 
 class ReadFile {
     static func object<T: Codable>(from filename: String, extension type: String) -> T {
+        return object(from: filename, extension: type, bundle: Bundle(for: self))
+    }
+
+    static func object<T: Codable>(from filename: String, extension type: String, bundle: Bundle) -> T {
         do {
-            let bundle = Bundle(for: self)
             guard let url = bundle.url(forResource: filename, withExtension: type) else { fatalError() }
             let data = try Data(contentsOf: url)
             let jsonDecoder = JSONDecoder.IRJSONDecoder()
@@ -20,10 +23,13 @@ class ReadFile {
             fatalError()
         }
     }
-    
+
     static func arrayReponse<T: Codable>(from filename: String, extension type: String) -> T {
+        return arrayReponse(from: filename, extension: type, bundle: Bundle(for: self))
+    }
+
+    static func arrayReponse<T: Codable>(from filename: String, extension type: String, bundle: Bundle) -> T {
         do {
-            let bundle = Bundle(for: self)
             guard let url = bundle.url(forResource: filename, withExtension: type) else { fatalError() }
             let data = try Data(contentsOf: url)
             let jsonDecoder = JSONDecoder.IRJSONDecoder()
