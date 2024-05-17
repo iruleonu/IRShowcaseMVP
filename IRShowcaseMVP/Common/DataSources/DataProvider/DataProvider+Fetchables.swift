@@ -22,3 +22,20 @@ extension DataProvider: FetchBabyNamePopularitiesProtocol {
             .eraseToAnyPublisher()
     }
 }
+
+extension DataProvider: FetchDummyProductsProtocol {
+    func fetchDummyProducts() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
+        fetchStuff(resource: .dummyProducts)
+            .tryMap({ elems, source in
+                if let cast = elems as? DummyProductDataContainer {
+                    return (cast, source)
+                }
+                throw DataProviderError.casting
+            })
+            .mapError({ DataProviderError.fetch(error: $0) })
+            .eraseToAnyPublisher()
+    }
+}
+
+extension DataProvider: DummyProductsLocalDataProvider {}
+

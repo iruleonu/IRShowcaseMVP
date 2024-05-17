@@ -11,6 +11,7 @@ import Foundation
 enum Resource {
     case unknown
     case babyNamePopularities
+    case dummyProducts
 }
 
 extension Resource {
@@ -20,6 +21,8 @@ extension Resource {
             return (.GET, "", [:])
         case .babyNamePopularities:
             return (.GET, "/views/25th-nujf/rows.json", [:])
+        case .dummyProducts:
+            return (.GET, "/products", ["limit":"100"])
         }
     }
 }

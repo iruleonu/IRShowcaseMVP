@@ -36,7 +36,7 @@ final class RootCoordinator: RootRouting {
     }
     
     func launchOnBoarding() {
-        window.rootViewController = builders.makeOnBoarding()
+        window.rootViewController = builders.makePopularBabyNamesScreen()
     }
     
     private func handleLaunchFlow(_ launchFlow: LaunchFlow) {
