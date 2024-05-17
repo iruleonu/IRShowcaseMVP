@@ -15,7 +15,7 @@ import Combine
 @testable import IRShowcaseMVP
 
 final class DummyProductsListViewPresenterTests: TestCase {
-    private var subject: DummyProductsViewPresenterImpl!
+    private var subject: DummyProductsViewModelImpl!
     private var cancellables: Set<AnyCancellable>!
 
     override func setUp() {
@@ -30,7 +30,7 @@ final class DummyProductsListViewPresenterTests: TestCase {
         let routingMock = DummyProductsScreenRoutingMock()
         let localDataProviderMock = DummyProductsLocalDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
-        subject = DummyProductsViewPresenterImpl(
+        subject = DummyProductsViewModelImpl(
             routing: routingMock,
             localDataProvider: localDataProviderMock,
             remoteDataProvider: remoteDataProviderMock
@@ -58,7 +58,7 @@ final class DummyProductsListViewPresenterTests: TestCase {
         subject.onAppear()
 
         subject
-            .viewModel
+            .observableObject
             .$dummyProducts
             .dropFirst()
             .sink { array in
@@ -78,7 +78,7 @@ final class DummyProductsListViewPresenterTests: TestCase {
         let routingMock = DummyProductsScreenRoutingMock()
         let localDataProviderMock = DummyProductsLocalDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
-        subject = DummyProductsViewPresenterImpl(
+        subject = DummyProductsViewModelImpl(
             routing: routingMock,
             localDataProvider: localDataProviderMock,
             remoteDataProvider: remoteDataProviderMock
@@ -105,7 +105,7 @@ final class DummyProductsListViewPresenterTests: TestCase {
         subject.onAppear()
 
         subject
-            .viewModel
+            .observableObject
             .$dummyProducts
             .dropFirst()
             .sink { array in
@@ -125,7 +125,7 @@ final class DummyProductsListViewPresenterTests: TestCase {
         let routingMock = DummyProductsScreenRoutingMock()
         let localDataProviderMock = DummyProductsLocalDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
-        subject = DummyProductsViewPresenterImpl(
+        subject = DummyProductsViewModelImpl(
             routing: routingMock,
             localDataProvider: localDataProviderMock,
             remoteDataProvider: remoteDataProviderMock
@@ -154,7 +154,7 @@ final class DummyProductsListViewPresenterTests: TestCase {
         subject.onAppear()
 
         subject
-            .viewModel
+            .observableObject
             .$showErrorView
             .sink { showErrorView in
                 XCTAssertTrue(showErrorView)
@@ -162,38 +162,4 @@ final class DummyProductsListViewPresenterTests: TestCase {
             }
             .store(in: &cancellables)
     }
-
-//    func testShowErrorViewBooleanIsTrueOnError() {
-//        let expectation = self.expectation(description: "Expected to the showErrorView boolean to be true on fetch error")
-//        defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
-//
-//        let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
-//        let routingMock = RandomNameSelectorScreenRoutingMock()
-//        let subject = RandomNameSelectorPresenterImpl(
-//            routing: routingMock,
-//            dataProvider: dataProviderMock
-//        )
-//
-//        Given(
-//            dataProviderMock,
-//            .fetchBabyNamePopularities(willProduce: { stubber in
-//                let passthroughSubject = PassthroughSubject<BabyNamePopularityDataContainer, Error>()
-//                stubber.return(passthroughSubject.eraseToAnyPublisher())
-//                passthroughSubject.send(completion: .failure(DataProviderError.noConnectivity))
-//            })
-//        )
-//
-//        XCTAssert(subject.viewModel.showErrorView == false)
-//
-//        subject.onAppear()
-//
-//        subject
-//            .viewModel
-//            .$showErrorView
-//            .sink { showErrorView in
-//                XCTAssertTrue(showErrorView)
-//                expectation.fulfill()
-//            }
-//            .store(in: &cancellables)
-//    }
 }

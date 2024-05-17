@@ -1,5 +1,5 @@
 //
-//  DummyProductDetailsPresenter.swift
+//  DummyProductDetailsViewModel.swift
 //  IRShowcaseMVP
 //
 //  Created by Nuno Salvador on 16/05/2024.
@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-final class DummyProductDetailsViewModel: ObservableObject {
+final class DummyProductDetailsViewObservableObject: ObservableObject {
     @Published var title: String
     @Published var price: String
     @Published var discountPercentage: String
@@ -29,17 +29,17 @@ final class DummyProductDetailsViewModel: ObservableObject {
 }
 
 // sourcery: AutoMockable
-protocol DummyProductDetailsViewPresenter {
-    var viewModel: DummyProductDetailsViewModel { get }
+protocol DummyProductDetailsViewModel {
+    var observableObject: DummyProductDetailsViewObservableObject { get }
     func onAppear()
 }
 
-final class DummyProductDetailsViewPresenterImpl: DummyProductDetailsViewPresenter {
-    var viewModel: DummyProductDetailsViewModel
+final class DummyProductDetailsViewModelImpl: DummyProductDetailsViewModel {
+    var observableObject: DummyProductDetailsViewObservableObject
     private(set) var routing: DummyProductDetailsScreenRouting
 
     init(routing: DummyProductDetailsScreenRouting, dummyProduct: DummyProduct) {
-        self.viewModel = DummyProductDetailsViewModel(dummyProduct: dummyProduct)
+        self.observableObject = DummyProductDetailsViewObservableObject(dummyProduct: dummyProduct)
         self.routing = routing
     }
 

@@ -19,7 +19,7 @@ final class DummyProductsListViewTests: TestCase {
         // Given
         let view = DummyProductsView(
             presenter: makePresenter(
-                viewModel: .stub()
+                observableObject: .stub()
             )
         )
 
@@ -31,7 +31,7 @@ final class DummyProductsListViewTests: TestCase {
         // Given
         let view = DummyProductsView(
             presenter: makePresenter(
-                viewModel: .stub(showErrorView: true)
+                observableObject: .stub(showErrorView: true)
             )
         )
 
@@ -42,12 +42,12 @@ final class DummyProductsListViewTests: TestCase {
 
 // MARK: - Private methods
 private extension DummyProductsListViewTests {
-    func makePresenter(viewModel: DummyProductsViewModel) -> DummyProductsViewPresenterMock {
-        let presenterMock = DummyProductsViewPresenterMock()
+    func makePresenter(observableObject: DummyProductsViewObservableObject) -> DummyProductsViewModelMock {
+        let presenterMock = DummyProductsViewModelMock()
 
         Given(
             presenterMock,
-            .viewModel(getter: viewModel)
+            .observableObject(getter: observableObject)
         )
 
         Given(
@@ -55,7 +55,7 @@ private extension DummyProductsListViewTests {
             .onDummyProductTap(
                 dummyProduct: .any,
                 willReturn: DummyProductDetailsView(
-                    presenter: makeDummyProductDetailsViewPresenter(viewModel: .init(dummyProduct: .stub()))
+                    presenter: makeDummyProductDetailsViewPresenter(observableObject: .init(dummyProduct: .stub()))
                 )
             )
         )
@@ -63,21 +63,21 @@ private extension DummyProductsListViewTests {
         return presenterMock
     }
 
-    func makeDummyProductDetailsViewPresenter(viewModel: DummyProductDetailsViewModel) -> DummyProductDetailsViewPresenterMock {
-        let presenterMock = DummyProductDetailsViewPresenterMock()
+    func makeDummyProductDetailsViewPresenter(observableObject: DummyProductDetailsViewObservableObject) -> DummyProductDetailsViewModelMock {
+        let presenterMock = DummyProductDetailsViewModelMock()
 
         Given(
             presenterMock,
-            .viewModel(getter: viewModel)
+            .observableObject(getter: observableObject)
         )
 
         return presenterMock
     }
 }
 
-private extension DummyProductsViewModel {
-    static func stub(showErrorView: Bool = false) -> DummyProductsViewModel {
-        let vm = DummyProductsViewModel()
+private extension DummyProductsViewObservableObject {
+    static func stub(showErrorView: Bool = false) -> DummyProductsViewObservableObject {
+        let vm = DummyProductsViewObservableObject()
 
         let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
 

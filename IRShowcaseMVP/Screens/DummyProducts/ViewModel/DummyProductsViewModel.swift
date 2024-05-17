@@ -1,5 +1,5 @@
 //
-//  DummyProductsViewPresenter.swift
+//  DummyProductsViewViewModel.swift
 //  IRShowcaseMVP
 //
 //  Created by Nuno Salvador on 16/05/2024.
@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-final class DummyProductsViewModel: ObservableObject {
+final class DummyProductsViewObservableObject: ObservableObject {
     let navBarTitle = "Dummy products list"
     @Published var dummyProducts: [DummyProduct] = []
     @Published var selectedDummyProduct: DummyProduct?
@@ -19,8 +19,8 @@ final class DummyProductsViewModel: ObservableObject {
 }
 
 // sourcery: AutoMockable
-protocol DummyProductsViewPresenter {
-    var viewModel: DummyProductsViewModel { get }
+protocol DummyProductsViewModel {
+    var observableObject: DummyProductsViewObservableObject { get }
     func onAppear()
     func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView
 }
@@ -28,11 +28,11 @@ protocol DummyProductsViewPresenter {
 // sourcery: AutoMockable
 protocol DummyProductsLocalDataProvider: FetchDummyProductsProtocol, PersistenceLayerSave {}
 
-final class DummyProductsViewPresenterImpl: DummyProductsViewPresenter {
+final class DummyProductsViewModelImpl: DummyProductsViewModel {
     private let routing: DummyProductsScreenRouting
     private let localDataProvider: DummyProductsLocalDataProvider
     private let remoteDataProvider: FetchDummyProductsProtocol
-    var viewModel: DummyProductsViewModel
+    var observableObject: DummyProductsViewObservableObject
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -44,7 +44,7 @@ final class DummyProductsViewPresenterImpl: DummyProductsViewPresenter {
         self.routing = routing
         self.localDataProvider = localDataProvider
         self.remoteDataProvider = remoteDataProvider
-        self.viewModel = DummyProductsViewModel()
+        self.observableObject = DummyProductsViewObservableObject()
     }
 
     func onAppear() {
@@ -62,12 +62,12 @@ final class DummyProductsViewPresenterImpl: DummyProductsViewPresenter {
                 case .finished:
                     break
                 case .failure:
-                    self.viewModel.showErrorView = true
+                    self.observableObject.showErrorView = true
                 }
             }, receiveValue: { [weak self] tuple in
                 guard let self = self else { return }
                 let (value, dataProviderSource) = tuple
-                self.viewModel.dummyProducts = value.products
+                self.observableObject.dummyProducts = value.products
                 self.localDataProvider.persistObjects(value) { _, _ in }
                 print("dataProviderSource: " + dataProviderSource.rawValue)
             })
@@ -75,7 +75,7 @@ final class DummyProductsViewPresenterImpl: DummyProductsViewPresenter {
     }
 }
 
-extension DummyProductsViewPresenterImpl {
+extension DummyProductsViewModelImpl {
     func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView {
         return self.routing.makeDummyProductDetailsView(dummyProduct: dummyProduct)
     }

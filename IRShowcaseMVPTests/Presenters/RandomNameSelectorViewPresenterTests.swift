@@ -15,7 +15,7 @@ import Combine
 @testable import IRShowcaseMVP
 
 final class RandomNameSelectorViewPresenterTests: TestCase {
-    private var subject: RandomNameSelectorPresenterImpl!
+    private var subject: RandomNameSelectorViewModelImpl!
     private var cancellables: Set<AnyCancellable>!
 
     override func setUp() {
@@ -29,7 +29,7 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
 
         let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
         let routingMock = RandomNameSelectorScreenRoutingMock()
-        subject = RandomNameSelectorPresenterImpl(
+        subject = RandomNameSelectorViewModelImpl(
             routing: routingMock,
             dataProvider: dataProviderMock
         )
@@ -46,7 +46,7 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
         subject.onAppear()
         
         subject
-            .viewModel
+            .observableObject
             .$babyNamePopularities
             .dropFirst()
             .sink { array in
@@ -62,7 +62,7 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
 
         let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
         let routingMock = RandomNameSelectorScreenRoutingMock()
-        let subject = RandomNameSelectorPresenterImpl(
+        let subject = RandomNameSelectorViewModelImpl(
             routing: routingMock,
             dataProvider: dataProviderMock
         )
@@ -76,12 +76,12 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
             })
         )
 
-        XCTAssert(subject.viewModel.showErrorView == false)
+        XCTAssert(subject.observableObject.showErrorView == false)
 
         subject.onAppear()
 
         subject
-            .viewModel
+            .observableObject
             .$showErrorView
             .sink { showErrorView in
                 XCTAssertTrue(showErrorView)
@@ -96,7 +96,7 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
 
         let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
         let routingMock = RandomNameSelectorScreenRoutingMock()
-        subject = RandomNameSelectorPresenterImpl(
+        subject = RandomNameSelectorViewModelImpl(
             routing: routingMock,
             dataProvider: dataProviderMock
         )
@@ -113,7 +113,7 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
         subject.onAppear()
 
         subject
-            .viewModel
+            .observableObject
             .$babyNamePopularities
             .receive(on: DispatchQueue.main)
             .dropFirst()
@@ -124,7 +124,7 @@ final class RandomNameSelectorViewPresenterTests: TestCase {
             .store(in: &cancellables)
 
         subject
-            .viewModel
+            .observableObject
             .$selectedBabyNamePopularity
             .receive(on: DispatchQueue.main)
             .dropFirst()

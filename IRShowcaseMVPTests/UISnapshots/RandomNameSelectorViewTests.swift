@@ -19,7 +19,7 @@ final class RandomNameSelectorViewTests: TestCase {
         // Given
         let view = RandomNameSelectorView(
             presenter: makePresenter(
-                viewModel: .stub()
+                observableObject: .stub()
             )
         )
 
@@ -31,7 +31,7 @@ final class RandomNameSelectorViewTests: TestCase {
         // Given
         let view = RandomNameSelectorView(
             presenter: makePresenter(
-                viewModel: .stub(selectFirstName: true)
+                observableObject: .stub(selectFirstName: true)
             )
         )
 
@@ -43,7 +43,7 @@ final class RandomNameSelectorViewTests: TestCase {
         // Given
         let view = RandomNameSelectorView(
             presenter: makePresenter(
-                viewModel: .stub(showErrorView: true)
+                observableObject: .stub(showErrorView: true)
             )
         )
 
@@ -54,12 +54,12 @@ final class RandomNameSelectorViewTests: TestCase {
 
 // MARK: - Private methods
 private extension RandomNameSelectorViewTests {
-    func makePresenter(viewModel: RandomNameSelectorViewModel) -> RandomNameSelectorPresenterMock {
-        let presenterMock = RandomNameSelectorPresenterMock()
+    func makePresenter(observableObject: RandomNameSelectorViewObservableObject) -> RandomNameSelectorViewModelMock {
+        let presenterMock = RandomNameSelectorViewModelMock()
 
         Given(
             presenterMock,
-            .viewModel(getter: viewModel)
+            .observableObject(getter: observableObject)
         )
 
         Given(
@@ -68,7 +68,7 @@ private extension RandomNameSelectorViewTests {
                 babyNamePopularity: .any,
                 willReturn: BabyNamePopularityDetailsView(
                     presenter: makeBabyNamePopularityDetailsViewPresenter(
-                        viewModel: .init(babyNamePopularity: .stub())
+                        observableObject: .init(babyNamePopularity: .stub())
                     )
                 )
             )
@@ -77,21 +77,21 @@ private extension RandomNameSelectorViewTests {
         return presenterMock
     }
 
-    func makeBabyNamePopularityDetailsViewPresenter(viewModel: BabyNamePopularityDetailsViewModel) -> BabyNamePopularityDetailsPresenterMock {
-        let presenterMock = BabyNamePopularityDetailsPresenterMock()
-        
+    func makeBabyNamePopularityDetailsViewPresenter(observableObject: BabyNamePopularityDetailsViewObservableObject) -> BabyNamePopularityDetailsViewModelMock {
+        let presenterMock = BabyNamePopularityDetailsViewModelMock()
+
         Given(
             presenterMock,
-            .viewModel(getter: viewModel)
+            .observableObject(getter: observableObject)
         )
 
         return presenterMock
     }
 }
 
-private extension RandomNameSelectorViewModel {
-    static func stub(selectFirstName: Bool = false, showErrorView: Bool = false) -> RandomNameSelectorViewModel {
-        let vm = RandomNameSelectorViewModel()
+private extension RandomNameSelectorViewObservableObject {
+    static func stub(selectFirstName: Bool = false, showErrorView: Bool = false) -> RandomNameSelectorViewObservableObject {
+        let vm = RandomNameSelectorViewObservableObject()
 
         let babyNamePopularitiesDataContainer: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
         let orderedSet = OrderedSet(babyNamePopularitiesDataContainer.babyNamePopularityRepresentation)

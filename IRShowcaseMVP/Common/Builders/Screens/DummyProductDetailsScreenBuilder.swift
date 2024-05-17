@@ -21,7 +21,7 @@ protocol DummyProductDetailsScreenChildBuilders {
 struct DummyProductDetailsScreenBuilder {
     func make(dummyProduct: DummyProduct) -> DummyProductDetailsView {
         let coordinator = DummyProductDetailsScreenCoordinator(builders: self)
-        let presenter = DummyProductDetailsViewPresenterImpl(routing: coordinator, dummyProduct: dummyProduct)
+        let presenter = DummyProductDetailsViewModelImpl(routing: coordinator, dummyProduct: dummyProduct)
         return DummyProductDetailsView(presenter: presenter)
     }
 }

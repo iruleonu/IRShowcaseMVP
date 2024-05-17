@@ -9,12 +9,12 @@
 import SwiftUI
 
 struct DummyProductsView : View {
-    private let presenter: DummyProductsViewPresenter
-    @ObservedObject private var viewModel: DummyProductsViewModel
+    private let presenter: DummyProductsViewModel
+    @ObservedObject private var viewModel: DummyProductsViewObservableObject
 
-    init(presenter: DummyProductsViewPresenter) {
+    init(presenter: DummyProductsViewModel) {
         self.presenter = presenter
-        self.viewModel = presenter.viewModel
+        self.viewModel = presenter.observableObject
     }
 
     var body: some View {
@@ -30,8 +30,8 @@ struct DummyProductsView : View {
 }
 
 private struct ContentView: View {
-    let presenter: DummyProductsViewPresenter
-    @ObservedObject var viewModel: DummyProductsViewModel
+    let presenter: DummyProductsViewModel
+    @ObservedObject var viewModel: DummyProductsViewObservableObject
 
     var body: some View {
         NavigationView {
@@ -53,7 +53,7 @@ private struct ContentView: View {
 }
 
 private struct ErrorView: View {
-    @ObservedObject var viewModel: DummyProductsViewModel
+    @ObservedObject var viewModel: DummyProductsViewObservableObject
 
     var body: some View {
         Text(viewModel.errorViewLabel)

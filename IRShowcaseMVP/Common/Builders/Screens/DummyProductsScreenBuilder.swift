@@ -24,7 +24,7 @@ struct DummyProductsScreenBuilder {
         remoteDataProvider: FetchDummyProductsProtocol
     ) -> DummyProductsView {
         let coordinator = DummyProductsScreenCoordinator(builders: self)
-        let presenter = DummyProductsViewPresenterImpl(
+        let presenter = DummyProductsViewModelImpl(
             routing: coordinator,
             localDataProvider: localDataProvider,
             remoteDataProvider: remoteDataProvider
