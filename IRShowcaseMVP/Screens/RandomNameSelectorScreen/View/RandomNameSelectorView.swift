@@ -9,12 +9,12 @@
 import SwiftUI
 
 struct RandomNameSelectorView : View {
-    private let presenter: RandomNameSelectorPresenter
-    @ObservedObject private var viewModel: RandomNameSelectorViewModel
+    private let presenter: RandomNameSelectorViewModel
+    @ObservedObject private var viewModel: RandomNameSelectorViewObservableObject
 
-    init(presenter: RandomNameSelectorPresenter) {
+    init(presenter: RandomNameSelectorViewModel) {
         self.presenter = presenter
-        self.viewModel = presenter.viewModel
+        self.viewModel = presenter.observableObject
     }
 
     var body: some View {
@@ -30,8 +30,8 @@ struct RandomNameSelectorView : View {
 }
 
 private struct ContentView: View {
-    let presenter: RandomNameSelectorPresenter
-    @ObservedObject var viewModel: RandomNameSelectorViewModel
+    let presenter: RandomNameSelectorViewModel
+    @ObservedObject var viewModel: RandomNameSelectorViewObservableObject
 
     var body: some View {
         NavigationView {

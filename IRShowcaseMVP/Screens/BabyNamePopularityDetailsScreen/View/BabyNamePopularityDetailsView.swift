@@ -9,12 +9,12 @@
 import SwiftUI
 
 struct BabyNamePopularityDetailsView : View {
-    private let presenter: BabyNamePopularityDetailsPresenter
-    @ObservedObject private var viewModel: BabyNamePopularityDetailsViewModel
+    private let presenter: BabyNamePopularityDetailsViewModel
+    @ObservedObject private var viewModel: BabyNamePopularityDetailsViewObservableObject
 
-    init(presenter: BabyNamePopularityDetailsPresenter) {
+    init(presenter: BabyNamePopularityDetailsViewModel) {
         self.presenter = presenter
-        self.viewModel = presenter.viewModel
+        self.viewModel = presenter.observableObject
     }
 
     var body: some View {

@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-final class BabyNamePopularityDetailsViewModel: ObservableObject {
+final class BabyNamePopularityDetailsViewObservableObject: ObservableObject {
     @Published var yearOfBirth: String
     @Published var gender: Gender
     @Published var ethnicity: String
@@ -29,17 +29,17 @@ final class BabyNamePopularityDetailsViewModel: ObservableObject {
 }
 
 // sourcery: AutoMockable
-protocol BabyNamePopularityDetailsPresenter {
-    var viewModel: BabyNamePopularityDetailsViewModel { get }
+protocol BabyNamePopularityDetailsViewModel {
+    var observableObject: BabyNamePopularityDetailsViewObservableObject { get }
     func onAppear()
 }
 
-final class BabyNamePopularityDetailsPresenterImpl: BabyNamePopularityDetailsPresenter {
-    var viewModel: BabyNamePopularityDetailsViewModel
+final class BabyNamePopularityDetailsViewModelImpl: BabyNamePopularityDetailsViewModel {
+    var observableObject: BabyNamePopularityDetailsViewObservableObject
     private(set) var routing: BabyNamePopularityDetailsRouting
     
     init(routing: BabyNamePopularityDetailsRouting, babyNamePopularity: BabyNamePopularity) {
-        self.viewModel = BabyNamePopularityDetailsViewModel(babyNamePopularity: babyNamePopularity)
+        self.observableObject = BabyNamePopularityDetailsViewObservableObject(babyNamePopularity: babyNamePopularity)
         self.routing = routing
     }
 

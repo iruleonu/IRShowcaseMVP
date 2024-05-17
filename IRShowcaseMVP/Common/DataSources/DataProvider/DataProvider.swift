@@ -12,7 +12,7 @@ import Combine
 typealias DataProviderNetworkProtocol = APIURLRequestProtocol & URLRequestFetchable
 typealias DataProviderPersistenceProtocol = PersistenceLayerLoad & PersistenceLayerSave & PersistenceLayerRemove
 
-enum DataProviderSource {
+enum DataProviderSource: String {
     case local
     case remote
 }
@@ -218,5 +218,29 @@ extension DataProvider: Fetchable {
             .map({ ($0, DataProviderSource.remote) })
             .subscribe(on: DispatchQueue(label: "DataProvider.parserHandler"))
             .eraseToAnyPublisher()
+    }
+}
+
+extension DataProvider: DataProviderNetworkProtocol {
+    func buildUrlRequest(resource: Resource) -> URLRequest {
+        network.buildUrlRequest(resource: resource)
+    }
+    
+    func fetchData(request: URLRequest) -> AnyPublisher<(Data, URLResponse), DataProviderError> {
+        network.fetchData(request: request)
+    }
+}
+
+extension DataProvider: DataProviderPersistenceProtocol {
+    func fetchResource<T>(_ resource: Resource) -> AnyPublisher<T, PersistenceLayerError> {
+        persistence.fetchResource(resource)
+    }
+
+    func persistObjects<T>(_ objects: T, saveCompletion: @escaping PersistenceSaveCompletion) {
+        persistence.persistObjects(objects, saveCompletion: saveCompletion)
+    }
+
+    func removeResource(_ resource: Resource) -> AnyPublisher<Bool, PersistenceLayerError> {
+        persistence.removeResource(resource)
     }
 }

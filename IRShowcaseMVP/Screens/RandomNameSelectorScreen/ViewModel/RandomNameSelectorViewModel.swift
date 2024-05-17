@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-final class RandomNameSelectorViewModel: ObservableObject {
+final class RandomNameSelectorViewObservableObject: ObservableObject {
     @Published var navBarTitle = "Popular baby names"
     @Published var babyNamePopularities: [BabyNamePopularity] = []
     @Published var selectedBabyNamePopularity: BabyNamePopularity?
@@ -18,8 +18,8 @@ final class RandomNameSelectorViewModel: ObservableObject {
 }
 
 // sourcery: AutoMockable
-protocol RandomNameSelectorPresenter {
-    var viewModel: RandomNameSelectorViewModel { get }
+protocol RandomNameSelectorViewModel {
+    var observableObject: RandomNameSelectorViewObservableObject { get }
     func onAppear()
     func onFemaleButtonTap()
     func onRandomButtonTap()
@@ -27,10 +27,10 @@ protocol RandomNameSelectorPresenter {
     func navigateToBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView
 }
 
-final class RandomNameSelectorPresenterImpl: RandomNameSelectorPresenter {
+final class RandomNameSelectorViewModelImpl: RandomNameSelectorViewModel {
     private(set) var routing: RandomNameSelectorScreenRouting
     private var dataProvider: FetchBabyNamePopularitiesProtocol
-    var viewModel: RandomNameSelectorViewModel
+    var observableObject: RandomNameSelectorViewObservableObject
     private var currentGender: Gender
 
     private var cancellables = Set<AnyCancellable>()
@@ -38,7 +38,7 @@ final class RandomNameSelectorPresenterImpl: RandomNameSelectorPresenter {
     init(routing: RandomNameSelectorScreenRouting, dataProvider: FetchBabyNamePopularitiesProtocol) {
         self.routing = routing
         self.dataProvider = dataProvider
-        self.viewModel = RandomNameSelectorViewModel()
+        self.observableObject = RandomNameSelectorViewObservableObject()
         currentGender = Gender.unknown
     }
 
@@ -50,20 +50,20 @@ final class RandomNameSelectorPresenterImpl: RandomNameSelectorPresenter {
         dataProvider.fetchBabyNamePopularities()
             .catch({ [weak self] error -> Empty<BabyNamePopularityDataContainer, Never> in
                 guard let self = self else { return Empty<BabyNamePopularityDataContainer, Never>() }
-                self.viewModel.showErrorView = true
+                self.observableObject.showErrorView = true
                 return Empty<BabyNamePopularityDataContainer, Never>()
             })
             .receive(on: DispatchQueue.main)
             .sink { [weak self] babyNamePopularitiesDataContainer in
                 guard let self = self else { return }
-                let noDuplicates = Set(self.viewModel.babyNamePopularities).union(Set(babyNamePopularitiesDataContainer.babyNamePopularityRepresentation))
-                self.viewModel.babyNamePopularities = Array(noDuplicates)
+                let noDuplicates = Set(self.observableObject.babyNamePopularities).union(Set(babyNamePopularitiesDataContainer.babyNamePopularityRepresentation))
+                self.observableObject.babyNamePopularities = Array(noDuplicates)
             }
             .store(in: &cancellables)
     }
 }
 
-extension RandomNameSelectorPresenterImpl {
+extension RandomNameSelectorViewModelImpl {
     func navigateToBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView {
         return self.routing.buildBabyNamePopularityDetails(babyNamePopularity: babyNamePopularity)
     }
@@ -74,11 +74,11 @@ extension RandomNameSelectorPresenterImpl {
 
     func onRandomButtonTap() {
         guard currentGender != .unknown,
-            let babyNamePopularity = selectOneRandomName(fromBabyNames: self.viewModel.babyNamePopularities, gender: currentGender)
+            let babyNamePopularity = selectOneRandomName(fromBabyNames: self.observableObject.babyNamePopularities, gender: currentGender)
         else {
             return
         }
-        self.viewModel.selectedBabyNamePopularity = babyNamePopularity
+        self.observableObject.selectedBabyNamePopularity = babyNamePopularity
     }
 
     func onMaleButtonTap() {
@@ -86,7 +86,7 @@ extension RandomNameSelectorPresenterImpl {
     }
 }
 
-private extension RandomNameSelectorPresenterImpl {
+private extension RandomNameSelectorViewModelImpl {
     private func selectOneRandomFemale(fromBabyNames babyNames: [BabyNamePopularity]) -> BabyNamePopularity? {
         return selectOneRandomName(fromBabyNames: babyNames, gender: .female)
     }

@@ -15,21 +15,26 @@ extension JSONEncoder {
             jsonEncoder.outputFormatting = .prettyPrinted
             let json = try jsonEncoder.encode(data)
             guard let jsonString = String(data: json, encoding: .utf8) else { return }
-            saveToDocumentDirectory(jsonString)
+            FileManager.saveStringToDocumentDirectory(jsonString, filename: "Output.json")
         } catch {
             print(error.localizedDescription)
         }
     }
 
-    static private func saveToDocumentDirectory(_ jsonString: String) {
-        guard let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-        let fileURL = path.appendingPathComponent("Output.json")
-
+    static func encodeObjectToString<T: Encodable>(from data: T, filename: String) -> (String?, Error?) {
+        var auxString: String?
+        var auxError: Error?
         do {
-            try jsonString.write(to: fileURL, atomically: true, encoding: .utf8)
+            let jsonEncoder = JSONEncoder()
+            jsonEncoder.outputFormatting = .prettyPrinted
+            let json = try jsonEncoder.encode(data)
+            guard let jsonString = String(data: json, encoding: .utf8) else {
+                return (nil, EncodingError.invalidValue("", .init(codingPath: [], debugDescription: "")))
+            }
+            auxString = jsonString
         } catch {
-            print(error.localizedDescription)
+            auxError = error
         }
-
+        return (auxString, auxError)
     }
 }

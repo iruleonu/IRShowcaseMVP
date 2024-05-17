@@ -4,6 +4,8 @@
 <dict>
     <key>APIBaseURL</key>
     <string>$(APIBASEURL)</string>
+    <key>APIBabyNamePopularityBASEURL</key>
+    <string>$(APIBabyNamePopularityBASEURL)</string>
     <key>APIAuthBearerKey</key>
     <string>$(APIAuthBearerKey)</string>
     <key>APIUserAgent</key>

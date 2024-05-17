@@ -21,7 +21,7 @@ protocol BabyNamePopularityDetailsChildBuilders {
 struct BabyNamePopularityDetailsScreenBuilder {
     func make(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView {
         let coordinator = BabyNamePopularityDetailsCoordinator(builders: self)
-        let presenter = BabyNamePopularityDetailsPresenterImpl(routing: coordinator, babyNamePopularity: babyNamePopularity)
+        let presenter = BabyNamePopularityDetailsViewModelImpl(routing: coordinator, babyNamePopularity: babyNamePopularity)
         return BabyNamePopularityDetailsView(presenter: presenter)
     }
 }
