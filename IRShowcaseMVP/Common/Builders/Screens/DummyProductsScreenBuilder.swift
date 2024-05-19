@@ -24,21 +24,49 @@ struct DummyProductsScreenBuilder {
         remoteDataProvider: FetchDummyProductsProtocol
     ) -> DummyProductsView {
         let coordinator = DummyProductsScreenCoordinator(builders: self)
-        let presenter = DummyProductsViewModelImpl(
+        let viewModel = DummyProductsViewModelImpl(
             routing: coordinator,
             localDataProvider: localDataProvider,
             remoteDataProvider: remoteDataProvider
         )
-        return DummyProductsView(presenter: presenter)
+        return DummyProductsView(viewModel: viewModel)
     }
 
     func make(dataProvider: DummyProductsLocalDataProvider) -> DummyProductsView {
         let coordinator = DummyProductsScreenCoordinator(builders: self)
-        let presenter = DummyProductsWithHybridDataProviderViewModelImpl(
+        let viewModel = DummyProductsWithHybridDataProviderViewModelImpl(
             routing: coordinator,
             dataProvider: dataProvider
         )
-        return DummyProductsView(presenter: presenter)
+        return DummyProductsView(viewModel: viewModel)
+    }
+
+    func makeUsingPaginatedViewModel(
+        localDataProvider: DummyProductsLocalDataProvider,
+        remoteDataProvider: FetchDummyProductsProtocol,
+        paginationSize: Int
+    ) -> DummyProductsView {
+        let coordinator = DummyProductsScreenCoordinator(builders: self)
+        let viewModel = DummyProductsWithPaginationViewModelImpl(
+            routing: coordinator,
+            localDataProvider: localDataProvider,
+            remoteDataProvider: remoteDataProvider, 
+            paginationSize: paginationSize
+        )
+        return DummyProductsView(viewModel: viewModel)
+    }
+
+    func makeUsingPaginatedViewModel(
+        hybridDataProvider: DummyProductsLocalDataProvider,
+        paginationSize: Int
+    ) -> DummyProductsView {
+        let coordinator = DummyProductsScreenCoordinator(builders: self)
+        let viewModel = DummyProductsWithPaginationAndHybridDataProviderViewModelImpl(
+            routing: coordinator,
+            dataProvider: hybridDataProvider,
+            paginationSize: paginationSize
+        )
+        return DummyProductsView(viewModel: viewModel)
     }
 }
 

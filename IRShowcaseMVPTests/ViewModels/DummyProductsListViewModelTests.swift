@@ -38,7 +38,7 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProducts(willProduce: { stubber in
+            .fetchDummyProductsAll(willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .local))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -47,7 +47,7 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProducts(willProduce: { stubber in
+            .fetchDummyProductsAll(willProduce: { stubber in
                 let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((dataContainer, .remote))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -63,7 +63,7 @@ final class DummyProductsListViewModelTests: TestCase {
             .sink { array in
                 XCTAssert(array.count > 0)
 
-                remoteDataProviderMock.verify(.fetchDummyProducts(), count: .moreOrEqual(to: 1))
+                remoteDataProviderMock.verify(.fetchDummyProductsAll(), count: .moreOrEqual(to: 1))
                 localDataProviderMock.verify(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any), count: .exactly(1))
 
                 expectation.fulfill()
@@ -86,7 +86,7 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProducts(willProduce: { stubber in
+            .fetchDummyProductsAll(willProduce: { stubber in
                 let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((dataContainer, .local))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -95,7 +95,7 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProducts(willProduce: { stubber in
+            .fetchDummyProductsAll(willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .remote))
                 stubber.return(publisher.eraseToAnyPublisher())
             })
@@ -110,15 +110,16 @@ final class DummyProductsListViewModelTests: TestCase {
             .sink { array in
                 XCTAssert(array.count > 0)
 
-                remoteDataProviderMock.verify(.fetchDummyProducts(), count: .exactly(0))
+                remoteDataProviderMock.verify(.fetchDummyProducts(limit: .any, skip: .any), count: .exactly(0))
+                localDataProviderMock.verify(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any), count: .exactly(0))
 
                 expectation.fulfill()
             }
             .store(in: &cancellables)
     }
 
-    func tesShowErrorIfItCouldntFetchLocallyOrRemote() {
-        let expectation = self.expectation(description: "Expected to tesShowErrorIfItCouldntFetchLocallyOrRemote")
+    func testShowErrorIfItCouldntFetchLocallyOrRemote() {
+        let expectation = self.expectation(description: "Expected to showErrorIfItCouldntFetchLocallyOrRemote")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
         let routingMock = DummyProductsScreenRoutingMock()
@@ -132,7 +133,7 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProducts(willProduce: { stubber in
+            .fetchDummyProductsAll(willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .local))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -141,7 +142,7 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProducts(willProduce: { stubber in
+            .fetchDummyProductsAll(willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .remote))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -153,6 +154,8 @@ final class DummyProductsListViewModelTests: TestCase {
         subject
             .observableObject
             .$showErrorView
+            .filter({ $0 })
+            .first()
             .sink { showErrorView in
                 XCTAssertTrue(showErrorView)
                 expectation.fulfill()

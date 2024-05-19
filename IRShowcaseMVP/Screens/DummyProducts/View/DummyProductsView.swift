@@ -9,54 +9,60 @@
 import SwiftUI
 
 struct DummyProductsView : View {
-    private let presenter: DummyProductsViewModel
-    @ObservedObject private var viewModel: DummyProductsViewObservableObject
+    private let viewModel: DummyProductsViewModel
+    @ObservedObject private var observableObject: DummyProductsViewObservableObject
 
-    init(presenter: DummyProductsViewModel) {
-        self.presenter = presenter
-        self.viewModel = presenter.observableObject
+    init(viewModel: DummyProductsViewModel) {
+        self.viewModel = viewModel
+        self.observableObject = viewModel.observableObject
     }
 
     var body: some View {
-        if viewModel.showErrorView {
-            ErrorView(viewModel: viewModel)
+        if observableObject.showErrorView {
+            ErrorView(label: $observableObject.errorViewLabel)
         } else {
             ContentView(
-                presenter: presenter,
-                viewModel: viewModel
+                viewModel: viewModel,
+                observableObject: observableObject
             )
         }
     }
 }
 
 private struct ContentView: View {
-    let presenter: DummyProductsViewModel
-    @ObservedObject var viewModel: DummyProductsViewObservableObject
+    let viewModel: DummyProductsViewModel
+    @ObservedObject var observableObject: DummyProductsViewObservableObject
 
     var body: some View {
         NavigationView {
             VStack {
                 ScrollViewReader { proxy in
-                    List($viewModel.dummyProducts, id: \.self, selection: $viewModel.selectedDummyProduct) { dummyProduct in
+                    List($observableObject.dummyProducts, id: \.self, selection: $observableObject.selectedDummyProduct) { dummyProduct in
                         NavigationLink {
-                            self.presenter.onDummyProductTap(dummyProduct: dummyProduct.wrappedValue)
+                            self.viewModel.onDummyProductTap(dummyProduct: dummyProduct.wrappedValue)
                         } label: {
                             DummyProductCell(dummyProduct: dummyProduct.wrappedValue)
                         }
+                        .onAppear {
+                            self.viewModel.onItemAppear(dummyProduct.wrappedValue)
+                        }
+                    }
+                    if observableObject.pagingState.isFetching {
+                        ProgressView()
                     }
                 }
             }
-            .onAppear { self.presenter.onAppear() }
-            .navigationBarTitle(Text(self.viewModel.navBarTitle))
+            .onAppear { self.viewModel.onAppear() }
+            .navigationBarTitle(Text(self.observableObject.navBarTitle))
         }
     }
 }
 
 private struct ErrorView: View {
-    @ObservedObject var viewModel: DummyProductsViewObservableObject
+    @Binding var label: String
 
     var body: some View {
-        Text(viewModel.errorViewLabel)
+        Text(label)
     }
 }
 

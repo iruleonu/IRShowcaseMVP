@@ -145,6 +145,7 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
 
                 persistenceMock.verify(.fetchResource(.any), count: .exactly(1))
                 networkMock.verify(.fetchData(request: .any), count: .exactly(0))
+                persistenceMock.verify(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any), count: .exactly(0))
 
                 expectation.fulfill()
             }
