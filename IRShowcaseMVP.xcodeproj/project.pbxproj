@@ -78,6 +78,7 @@
 		27CC167F2BF67CB600F1E043 /* DataProviderRemoteThenLocalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27CC167D2BF67CB600F1E043 /* DataProviderRemoteThenLocalTests.swift */; };
 		27D7ED2C2BF98E0500A62C2A /* DummyProductCellViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D7ED2B2BF98E0500A62C2A /* DummyProductCellViewTests.swift */; };
 		27D7ED2E2BF98EA000A62C2A /* DummyProductDetailsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D7ED2D2BF98EA000A62C2A /* DummyProductDetailsViewTests.swift */; };
+		27D7ED302BFA3EB700A62C2A /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 27D7ED2F2BFA3EB700A62C2A /* OrderedCollections */; };
 		27ED88F92BF82C3A0008A690 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ED88F82BF82C3A0008A690 /* Constants.swift */; };
 		27ED88FB2BF8E69A0008A690 /* DataProviderConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ED88FA2BF8E69A0008A690 /* DataProviderConfiguration.swift */; };
 		27ED88FD2BF8E6B20008A690 /* DataProviderHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ED88FC2BF8E6B20008A690 /* DataProviderHandlers.swift */; };
@@ -232,6 +233,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27D7ED302BFA3EB700A62C2A /* OrderedCollections in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -752,6 +754,7 @@
 			);
 			name = IRShowcaseMVP;
 			packageProductDependencies = (
+				27D7ED2F2BFA3EB700A62C2A /* OrderedCollections */,
 			);
 			productName = IRCV;
 			productReference = 27FB6F5122B2B58200D0A1CF /* IRShowcaseMVP.app */;
@@ -1298,6 +1301,11 @@
 			productName = Nimble;
 		};
 		27784E9A2BF5049E00FC059B /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 27784E992BF5049E00FC059B /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
+		};
+		27D7ED2F2BFA3EB700A62C2A /* OrderedCollections */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 27784E992BF5049E00FC059B /* XCRemoteSwiftPackageReference "swift-collections" */;
 			productName = OrderedCollections;
