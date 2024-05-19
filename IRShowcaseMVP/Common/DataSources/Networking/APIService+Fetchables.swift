@@ -23,14 +23,16 @@ extension APIServiceImpl: FetchBabyNamePopularitiesProtocol {
             }
         }
         
-        return session.fetchData(urlRequest)
+        return fetchData(urlRequest)
             .tryMap(parseData)
             .eraseToAnyPublisher()
     }
 }
 
 extension APIServiceImpl: FetchDummyProductsProtocol {
-    func fetchDummyProducts() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
+    func fetchDummyProducts(limit: Int, skip: Int) -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
+        let urlRequest = Resource.dummyProducts(limit: limit, skip: skip).buildUrlRequest(apiBaseUrl: apiBaseUrl)
+
         func parseData(_ tuple: (Data, URLResponse)) throws -> DummyProductDataContainer {
             do {
                 let (data, _) = tuple
@@ -41,10 +43,44 @@ extension APIServiceImpl: FetchDummyProductsProtocol {
             }
         }
 
-        let urlRequest = Resource.dummyProducts.buildUrlRequest(apiBaseUrl: apiBaseUrl)
-        return session.fetchData(urlRequest)
+        return fetchData(urlRequest)
             .tryMap(parseData)
             .map({ ($0, .remote) })
+            .eraseToAnyPublisher()
+    }
+
+    func fetchDummyProductsAll() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
+        fetchDummyProductsAllPaginated()
+    }
+}
+
+private extension APIServiceImpl {
+    func fetchDummyProductsAllPaginated() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
+        let skipNumberApiQueryParamPublisher = CurrentValueSubject<Int, Never>(0)
+        return skipNumberApiQueryParamPublisher
+            .flatMap({ pageIndex in
+                self.fetchDummyProducts(limit: Constants.DummyProductsAPIPageSize, skip: pageIndex).eraseToAnyPublisher()
+            })
+            .handleEvents(receiveOutput: { tuple in
+                let (fetchedPage, _) = tuple
+                let totalFetched = fetchedPage.skip + fetchedPage.limit
+                let hasMorePages = totalFetched < fetchedPage.total
+                if hasMorePages {
+                    skipNumberApiQueryParamPublisher.send(totalFetched)
+                } else {
+                    skipNumberApiQueryParamPublisher.send(completion: .finished)
+                }
+            })
+            .map({ $0.0 })
+            .reduce(DummyProductDataContainer(total: 0, skip: 0, limit: 0, products: []), { currentDataContainer, fetchedDataContainer in
+                return DummyProductDataContainer(
+                    total: fetchedDataContainer.total,
+                    skip: fetchedDataContainer.skip,
+                    limit: fetchedDataContainer.limit,
+                    products: currentDataContainer.products + fetchedDataContainer.products
+                )
+            })
+            .map({ ($0, .remote )})
             .eraseToAnyPublisher()
     }
 }

@@ -11,7 +11,21 @@ import Foundation
 enum Resource {
     case unknown
     case babyNamePopularities
-    case dummyProducts
+    case dummyProducts(limit: Int, skip: Int)
+    case dummyProductsAll
+
+    var rawValue: String {
+        switch self {
+        case .unknown:
+            return "unknown"
+        case .babyNamePopularities:
+            return "babyNamePopularities"
+        case .dummyProducts(let limit, let skip):
+            return "dummyProductsLimit:" + String(limit) + ";Skip:" + String(skip)
+        case .dummyProductsAll:
+            return "dummyProductsAll"
+        }
+    }
 }
 
 extension Resource {
@@ -21,8 +35,10 @@ extension Resource {
             return (.GET, "", [:])
         case .babyNamePopularities:
             return (.GET, "/views/25th-nujf/rows.json", [:])
-        case .dummyProducts:
-            return (.GET, "/products", ["limit":"100"])
+        case .dummyProducts(let limit, let skip):
+            return (.GET, "/products", ["limit" : String(limit), "skip" : String(skip)])
+        case .dummyProductsAll:
+            return (.GET, "/products", ["limit" : "0", "skip" : "0"])
         }
     }
 }
@@ -74,8 +90,8 @@ extension Resource: Equatable {
         switch (lhs.requestProperties, rhs.requestProperties) {
         case (let (_, lPath, lParams), let (_, rPath, rParams)):
             samePath = lPath == rPath
-            let lQueryItems = Resource.buildQueryItems(lParams)
-            let rQueryItems = Resource.buildQueryItems(rParams)
+            let lQueryItems = Resource.buildQueryItems(lParams)?.sorted(by: { $0.name > $1.name })
+            let rQueryItems = Resource.buildQueryItems(rParams)?.sorted(by: { $0.name > $1.name })
             sameParams = lQueryItems == rQueryItems
         }
         

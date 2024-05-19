@@ -39,8 +39,10 @@ extension PersistenceLayerImpl: PersistenceLayerLoad {
     func fetchResource<T>(_ resource: Resource) -> AnyPublisher<T, PersistenceLayerError> {
         switch resource {
         case .dummyProducts:
+            fallthrough
+        case .dummyProductsAll:
             return Future { promise in
-                let fileName = String(describing: type(of: DummyProductDataContainer.self))
+                let fileName = String(describing: type(of: DummyProductDataContainer.self)) + resource.rawValue
                 let savedFile: DummyProductDataContainer? = FileManager.object(from: fileName)
                 guard let casted = savedFile as? T else {
                     promise(.failure(PersistenceLayerError.casting))
@@ -67,7 +69,8 @@ extension PersistenceLayerImpl: PersistenceLayerSave {
     }
 
     private func persistDummyProductsDataContainer(_ object: DummyProductDataContainer, saveCompletion: @escaping PersistenceSaveCompletion) {
-        let fileName = String(describing: type(of: DummyProductDataContainer.self))
+        let resource: Resource = .dummyProducts(limit: object.limit, skip: object.skip)
+        let fileName = String(describing: type(of: DummyProductDataContainer.self)) + resource.rawValue
         let (jsonString, error) = JSONEncoder.encodeObjectToString(from: object, filename: fileName)
 
         if let jsonString = jsonString {

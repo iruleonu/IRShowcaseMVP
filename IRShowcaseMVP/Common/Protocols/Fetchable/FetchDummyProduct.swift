@@ -12,5 +12,6 @@ import Combine
 
 // sourcery: AutoMockable
 protocol FetchDummyProductsProtocol {
-    func fetchDummyProducts() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error>
+    func fetchDummyProducts(limit: Int, skip: Int) -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error>
+    func fetchDummyProductsAll() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error>
 }
