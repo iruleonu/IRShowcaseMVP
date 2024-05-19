@@ -16,12 +16,14 @@ final class DummyProductsViewObservableObject: ObservableObject {
     @Published var selectedDummyProduct: DummyProduct?
     @Published var showErrorView: Bool = false
     @Published var errorViewLabel: String = "Nothing to see"
+    @Published var pagingState: PagingState = .unknown
 }
 
 // sourcery: AutoMockable
 protocol DummyProductsViewModel {
     var observableObject: DummyProductsViewObservableObject { get }
     func onAppear()
+    func onItemAppear(_ item: DummyProduct)
     func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView
 }
 
@@ -32,8 +34,8 @@ final class DummyProductsViewModelImpl: DummyProductsViewModel {
     private let routing: DummyProductsScreenRouting
     private let localDataProvider: DummyProductsLocalDataProvider
     private let remoteDataProvider: FetchDummyProductsProtocol
+    
     var observableObject: DummyProductsViewObservableObject
-
     private var cancellables = Set<AnyCancellable>()
 
     init(
@@ -46,15 +48,28 @@ final class DummyProductsViewModelImpl: DummyProductsViewModel {
         self.remoteDataProvider = remoteDataProvider
         self.observableObject = DummyProductsViewObservableObject()
     }
+}
 
+extension DummyProductsViewModelImpl {
     func onAppear() {
         fetchDummyProducts()
     }
 
-    private func fetchDummyProducts() {
-        localDataProvider.fetchDummyProducts()
+    func onItemAppear(_ item: DummyProduct) {}
+
+    func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView {
+        routing.makeDummyProductDetailsView(dummyProduct: dummyProduct)
+    }
+}
+
+private extension DummyProductsViewModelImpl {
+    func fetchDummyProducts() {
+        guard !observableObject.pagingState.isFetching else { return }
+        observableObject.pagingState = .loadingFirstPage
+
+        localDataProvider.fetchDummyProductsAll()
             .catch({ _ in
-                return self.remoteDataProvider.fetchDummyProducts().eraseToAnyPublisher()
+                return self.remoteDataProvider.fetchDummyProductsAll().eraseToAnyPublisher()
             })
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { completion in
@@ -62,21 +77,24 @@ final class DummyProductsViewModelImpl: DummyProductsViewModel {
                 case .finished:
                     break
                 case .failure:
+                    self.observableObject.pagingState = .error
                     self.observableObject.showErrorView = true
                 }
             }, receiveValue: { [weak self] tuple in
                 guard let self = self else { return }
                 let (value, dataProviderSource) = tuple
-                self.localDataProvider.persistObjects(value) { _, _ in }
+
+                switch dataProviderSource {
+                case .remote:
+                    self.localDataProvider.persistObjects(value) { _, _ in }
+                case .local:
+                    break
+                }
+
+                observableObject.pagingState = .loaded
                 self.observableObject.dummyProducts = value.products
                 print("dataProviderSource: " + dataProviderSource.rawValue)
             })
             .store(in: &cancellables)
-    }
-}
-
-extension DummyProductsViewModelImpl {
-    func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView {
-        return self.routing.makeDummyProductDetailsView(dummyProduct: dummyProduct)
     }
 }

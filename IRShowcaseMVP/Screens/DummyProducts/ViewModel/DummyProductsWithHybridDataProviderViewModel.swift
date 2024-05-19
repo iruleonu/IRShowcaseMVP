@@ -25,34 +25,50 @@ final class DummyProductsWithHybridDataProviderViewModelImpl: DummyProductsViewM
         self.dataProvider = dataProvider
         self.observableObject = DummyProductsViewObservableObject()
     }
+}
 
+extension DummyProductsWithHybridDataProviderViewModelImpl {
     func onAppear() {
         fetchDummyProducts()
     }
 
-    private func fetchDummyProducts() {
-        dataProvider.fetchDummyProducts()
+    func onItemAppear(_ item: DummyProduct) {}
+
+    func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView {
+        routing.makeDummyProductDetailsView(dummyProduct: dummyProduct)
+    }
+}
+
+private extension DummyProductsWithHybridDataProviderViewModelImpl {
+    func fetchDummyProducts() {
+        guard !observableObject.pagingState.isFetching else { return }
+        observableObject.pagingState = .loadingFirstPage
+
+        dataProvider.fetchDummyProductsAll()
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { completion in
                 switch completion {
                 case .finished:
                     break
                 case .failure:
+                    self.observableObject.pagingState = .error
                     self.observableObject.showErrorView = true
                 }
             }, receiveValue: { [weak self] tuple in
                 guard let self = self else { return }
                 let (value, dataProviderSource) = tuple
-                self.dataProvider.persistObjects(value) { _, _ in }
+
+                switch dataProviderSource {
+                case .remote:
+                    self.dataProvider.persistObjects(value) { _, _ in }
+                case .local:
+                    break
+                }
+
                 self.observableObject.dummyProducts = value.products
+                self.observableObject.pagingState = .loaded
                 print("dataProviderSource: " + dataProviderSource.rawValue)
             })
             .store(in: &cancellables)
-    }
-}
-
-extension DummyProductsWithHybridDataProviderViewModelImpl {
-    func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView {
-        return self.routing.makeDummyProductDetailsView(dummyProduct: dummyProduct)
     }
 }

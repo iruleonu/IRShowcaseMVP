@@ -33,6 +33,9 @@ final class RootCoordinator: RootRouting {
 
     func launchMainScreen() {
         window.rootViewController = builders.makeMainScreen()
+        //window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProvider()
+        //window.rootViewController = builders.makeDummyProductsListScreenOnAPaginatedModel()
+        //window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProviderOnAPaginatedModel()
     }
     
     func launchOnBoarding() {

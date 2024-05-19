@@ -18,8 +18,22 @@ final class DummyProductsListViewTests: TestCase {
     func testDummyProductsListView_LoadedList() {
         // Given
         let view = DummyProductsView(
-            presenter: makePresenter(
+            viewModel: makeViewModel(
                 observableObject: .stub()
+            )
+        )
+
+        // Then
+        cwSnapshotOnDevices(view: view)
+    }
+
+    func testDummyProductsListView_FetchingNewPage() {
+        // Given
+        let view = DummyProductsView(
+            viewModel: makeViewModel(
+                observableObject: .stub(
+                    showLoadingSpinner: true
+                )
             )
         )
 
@@ -30,7 +44,7 @@ final class DummyProductsListViewTests: TestCase {
     func testDummyProductsListView_ErrorView() {
         // Given
         let view = DummyProductsView(
-            presenter: makePresenter(
+            viewModel: makeViewModel(
                 observableObject: .stub(showErrorView: true)
             )
         )
@@ -42,41 +56,44 @@ final class DummyProductsListViewTests: TestCase {
 
 // MARK: - Private methods
 private extension DummyProductsListViewTests {
-    func makePresenter(observableObject: DummyProductsViewObservableObject) -> DummyProductsViewModelMock {
-        let presenterMock = DummyProductsViewModelMock()
+    func makeViewModel(observableObject: DummyProductsViewObservableObject) -> DummyProductsViewModelMock {
+        let viewModelMock = DummyProductsViewModelMock()
 
         Given(
-            presenterMock,
+            viewModelMock,
             .observableObject(getter: observableObject)
         )
 
         Given(
-            presenterMock,
+            viewModelMock,
             .onDummyProductTap(
                 dummyProduct: .any,
                 willReturn: DummyProductDetailsView(
-                    presenter: makeDummyProductDetailsViewPresenter(observableObject: .init(dummyProduct: .stub()))
+                    viewModel: makeDummyProductDetailsViewPresenter(observableObject: .init(dummyProduct: .stub()))
                 )
             )
         )
 
-        return presenterMock
+        return viewModelMock
     }
 
     func makeDummyProductDetailsViewPresenter(observableObject: DummyProductDetailsViewObservableObject) -> DummyProductDetailsViewModelMock {
-        let presenterMock = DummyProductDetailsViewModelMock()
+        let viewModelMock = DummyProductDetailsViewModelMock()
 
         Given(
-            presenterMock,
+            viewModelMock,
             .observableObject(getter: observableObject)
         )
 
-        return presenterMock
+        return viewModelMock
     }
 }
 
 private extension DummyProductsViewObservableObject {
-    static func stub(showErrorView: Bool = false) -> DummyProductsViewObservableObject {
+    static func stub(
+        showErrorView: Bool = false,
+        showLoadingSpinner: Bool = false
+    ) -> DummyProductsViewObservableObject {
         let vm = DummyProductsViewObservableObject()
 
         let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
@@ -102,6 +119,10 @@ private extension DummyProductsViewObservableObject {
         vm.dummyProducts = products
 
         vm.showErrorView = showErrorView
+
+        if (showLoadingSpinner) {
+            vm.pagingState = .loadingNextPage
+        }
 
         return vm
     }

@@ -18,8 +18,15 @@ extension PersistenceLayerImpl: FetchBabyNamePopularitiesProtocol {
 }
 
 extension PersistenceLayerImpl: FetchDummyProductsProtocol {
-    func fetchDummyProducts() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
-        return self.fetchResource(.dummyProducts)
+    func fetchDummyProducts(limit: Int, skip: Int) -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
+        return self.fetchResource(.dummyProducts(limit: limit, skip: skip))
+            .mapError({ PersistenceLayerError.persistence(error: $0) })
+            .map({ ($0, .local) })
+            .eraseToAnyPublisher()
+    }
+
+    func fetchDummyProductsAll() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error> {
+        return self.fetchResource(.dummyProductsAll)
             .mapError({ PersistenceLayerError.persistence(error: $0) })
             .map({ ($0, .local) })
             .eraseToAnyPublisher()

@@ -33,72 +33,12 @@ protocol DataProviderProtocol {
     var handlers: DataProviderHandlers<TP> { get }
     func fetchStuff(resource: Resource) -> AnyPublisher<(TP, DataProviderSource), DataProviderError>
     func fetchStuff(resource: Resource, explicitFetchType: DataProviderFetchType) -> AnyPublisher<(TP, DataProviderSource), DataProviderError>
-}
-
-struct DataProviderConfiguration {
-    static let standard: DataProviderConfiguration = remoteOnErrorUseLocal
-
-    static let localOnly: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: false, remoteFirst: false, sendMultipleValuesFromBothLayers: false)
-    }()
-
-    static let remoteOnly: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: false, remoteEnabled: true, remoteFirst: true, sendMultipleValuesFromBothLayers: false)
-    }()
-
-    static let localOnErrorUseRemote: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: false, sendMultipleValuesFromBothLayers: false)
-    }()
-
-    static let remoteOnErrorUseLocal: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: true, sendMultipleValuesFromBothLayers: false)
-    }()
-    
-    static let localFirstThenRemote: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: false, sendMultipleValuesFromBothLayers: true)
-    }()
-
-    static let remoteFirstThenLocal: DataProviderConfiguration = {
-        return DataProviderConfiguration(persistenceEnabled: true, remoteEnabled: true, remoteFirst: true, sendMultipleValuesFromBothLayers: true)
-    }()
-
-    let persistenceEnabled: Bool
-    let remoteEnabled: Bool
-    let remoteFirst: Bool
-    let sendMultipleValuesFromBothLayers: Bool
-
-    init(persistenceEnabled pe: Bool, remoteEnabled re: Bool, remoteFirst rf: Bool, sendMultipleValuesFromBothLayers smvfbl: Bool) {
-        persistenceEnabled = pe
-        remoteEnabled = re
-        remoteFirst = rf
-        sendMultipleValuesFromBothLayers = smvfbl
-    }
-}
-
-struct DataProviderHandlers<T: Codable> {
-    typealias NetworkHandler = (URLRequestFetchable, URLRequest) -> AnyPublisher<Data, DataProviderError>
-    typealias NetworkParserHandler = (Data) -> AnyPublisher<T, DataProviderError>
-    typealias PersistenceSaveHandler = (PersistenceLayerSave, T) -> AnyPublisher<T, DataProviderError>
-    typealias PersistenceLoadHandler = (PersistenceLayerLoad, Resource) -> AnyPublisher<T, DataProviderError>
-    typealias PersistenceRemoveHandler = (PersistenceLayerRemove, Resource) -> AnyPublisher<Bool, DataProviderError>
-
-    let networkHandler: NetworkHandler
-    let networkParserHandler: NetworkParserHandler
-    let persistenceSaveHandler: PersistenceSaveHandler
-    let persistenceLoadHandler: PersistenceLoadHandler
-    let persistenceRemoveHandler: PersistenceRemoveHandler
-
-    init(networkHandler nh: @escaping NetworkHandler = { (_, _) in Empty().eraseToAnyPublisher() },
-         networkParserHandler nph: @escaping NetworkParserHandler = { _ in Empty().eraseToAnyPublisher() },
-         persistenceSaveHandler psh: @escaping PersistenceSaveHandler = { (_, _) in Empty().eraseToAnyPublisher() },
-         persistenceLoadHandler plh: @escaping PersistenceLoadHandler = { (_, _) in Empty().eraseToAnyPublisher() },
-         persistenceRemoveHandler prh: @escaping PersistenceRemoveHandler = { (_, _) in Empty().eraseToAnyPublisher() }) {
-        networkHandler = nh
-        networkParserHandler = nph
-        persistenceSaveHandler = psh
-        persistenceLoadHandler = plh
-        persistenceRemoveHandler = prh
-    }
+    func fetchStuff(
+        resource: Resource,
+        persistenceLoadProducer: AnyPublisher<(TP, DataProviderSource), DataProviderError>?,
+        remoteProducer: AnyPublisher<(TP, DataProviderSource), DataProviderError>?,
+        fetchType: DataProviderFetchType
+    ) -> AnyPublisher<(TP, DataProviderSource), DataProviderError>
 }
 
 struct DataProvider<Type: Codable>: DataProviderProtocol {
@@ -116,21 +56,31 @@ struct DataProvider<Type: Codable>: DataProviderProtocol {
     }
 
     func fetchStuff(resource: Resource) -> AnyPublisher<(T, DataProviderSource), DataProviderError> {
-        return fetchData((resource, .config))
+        return fetchStuff(resource: resource, persistenceLoadProducer: nil, remoteProducer: nil, fetchType: .config)
     }
 
     func fetchStuff(resource: Resource, explicitFetchType: DataProviderFetchType) -> AnyPublisher<(T, DataProviderSource), DataProviderError> {
-        return fetchData((resource, explicitFetchType))
-    }
-}
-
-extension DataProvider {
-    func saveToPersistence(_ elements: T) -> AnyPublisher<T, DataProviderError> {
-        return handlers.persistenceSaveHandler(persistence, elements)
+        return fetchStuff(resource: resource, persistenceLoadProducer: nil, remoteProducer: nil, fetchType: explicitFetchType)
     }
 
-    func removeEntities(forResource resource: Resource) -> AnyPublisher<Bool, DataProviderError> {
-        return handlers.persistenceRemoveHandler(persistence, resource)
+    func fetchStuff(
+        resource: Resource,
+        persistenceLoadProducer: AnyPublisher<(T, DataProviderSource), DataProviderError>?,
+        remoteProducer: AnyPublisher<(T, DataProviderSource), DataProviderError>?,
+        fetchType: DataProviderFetchType
+    ) -> AnyPublisher<(T, DataProviderSource), DataProviderError> {
+        switch fetchType {
+        case .config:
+            return fetchForTypeConfig(
+                input: resource,
+                persistenceLoadProducer: { persistenceLoadProducer ?? dataProviderPersistenceLoadProducer(resource: resource) },
+                remoteProducer: { remoteProducer ?? dataProviderRemoteProducer(resource: resource) }
+            )
+        case .local:
+            return persistenceLoadProducer ?? dataProviderPersistenceLoadProducer(resource: resource)
+        case .remote:
+            return remoteProducer ?? dataProviderRemoteProducer(resource: resource)
+        }
     }
 }
 
@@ -142,66 +92,66 @@ extension DataProvider: Fetchable {
     func fetchData(_ input: I) -> AnyPublisher<(T, DataProviderSource), DataProviderError> {
         switch input.1 {
         case .config:
-            return fetchForTypeConfig(input: input.0)
+            return fetchForTypeConfig(
+                input: input.0,
+                persistenceLoadProducer: { dataProviderPersistenceLoadProducer(resource: input.0) },
+                remoteProducer: { dataProviderRemoteProducer(resource: input.0) }
+            )
         case .local:
-            return fetchForTypeLocal(input: input.0)
+            return dataProviderPersistenceLoadProducer(resource: input.0)
         case .remote:
-            return fetchForTypeRemote(input: input.0)
+            return dataProviderRemoteProducer(resource: input.0)
         }
     }
 
-    private func fetchForTypeConfig(input: Resource) -> AnyPublisher<(T, DataProviderSource), DataProviderError> {
+    private func fetchForTypeConfig(
+        input: Resource,
+        persistenceLoadProducer: @escaping () -> AnyPublisher<(T, DataProviderSource), DataProviderError>,
+        remoteProducer: @escaping () -> AnyPublisher<(T, DataProviderSource), DataProviderError>
+    ) -> AnyPublisher<(T, DataProviderSource), DataProviderError> {
         // Guard for just local data provider config
         guard config.remoteEnabled else {
-            return persistenceLoadProducer(resource: input)
+            return persistenceLoadProducer()
         }
 
         // Guard for just remote data provider config
         guard config.persistenceEnabled else {
-            return remoteProducer(resource: input)
+            return remoteProducer()
         }
 
         // Hybrid
         guard config.remoteFirst else {
             guard config.sendMultipleValuesFromBothLayers else {
                 // Fetch from the persistence layer and on error use remote
-                return persistenceLoadProducer(resource: input)
-                    .catch({ _ in remoteProducer(resource: input) }).eraseToAnyPublisher()
+                return persistenceLoadProducer()
+                    .catch({ _ in remoteProducer()})
                     .eraseToAnyPublisher()
             }
 
             // Fetch from the persistence layer and send the values.
             // Then fetch remotely and send those values as well or empty if the remote fetch fails.
-            return persistenceLoadProducer(resource: input)
-                .merge(with: remoteProducer(resource: input).catch { _ in Empty<(T, DataProviderSource), DataProviderError>() }.eraseToAnyPublisher())
-                .catch({ _ in remoteProducer(resource: input) }).eraseToAnyPublisher()
+            return persistenceLoadProducer()
+                .merge(with: remoteProducer().catch { _ in Empty<(T, DataProviderSource), DataProviderError>() }.eraseToAnyPublisher())
+                .catch({ _ in remoteProducer() })
                 .eraseToAnyPublisher()
         }
 
         guard config.sendMultipleValuesFromBothLayers else {
             // Fetch remotly and on error use the persistence layer
-            return remoteProducer(resource: input)
-                .catch({ _ in persistenceLoadProducer(resource: input) }).eraseToAnyPublisher()
+            return remoteProducer()
+                .catch({ _ in persistenceLoadProducer() })
                 .eraseToAnyPublisher()
         }
 
         // Firstly fetch from the remote and send the values.
         // Then fetch from persistence layer and send those values as well or empty if the persistence layer fails.
-        return remoteProducer(resource: input)
-            .merge(with: persistenceLoadProducer(resource: input).catch { _ in Empty<(T, DataProviderSource), DataProviderError>() }.eraseToAnyPublisher())
-            .catch({ _ in persistenceLoadProducer(resource: input) }).eraseToAnyPublisher()
+        return remoteProducer()
+            .merge(with: persistenceLoadProducer().catch { _ in Empty<(T, DataProviderSource), DataProviderError>() }.eraseToAnyPublisher())
+            .catch({ _ in persistenceLoadProducer() })
             .eraseToAnyPublisher()
     }
 
-    private func fetchForTypeLocal(input: Resource) -> AnyPublisher<(T, DataProviderSource), DataProviderError> {
-        return persistenceLoadProducer(resource: input)
-    }
-
-    private func fetchForTypeRemote(input: Resource) -> AnyPublisher<(T, DataProviderSource), DataProviderError> {
-        return remoteProducer(resource: input)
-    }
-
-    private func persistenceLoadProducer(resource: Resource) -> AnyPublisher<V, DataProviderError> {
+    private func dataProviderPersistenceLoadProducer(resource: Resource) -> AnyPublisher<V, DataProviderError> {
         return handlers
             .persistenceLoadHandler(persistence, resource)
             .receive(on: DispatchQueue(label: "DataProvider.persistenceProducer"))
@@ -210,7 +160,7 @@ extension DataProvider: Fetchable {
             .eraseToAnyPublisher()
     }
 
-    private func remoteProducer(resource: Resource) -> AnyPublisher<V, DataProviderError> {
+    private func dataProviderRemoteProducer(resource: Resource) -> AnyPublisher<V, DataProviderError> {
         return handlers
             .networkHandler(network, network.buildUrlRequest(resource: resource))
             .receive(on: DispatchQueue(label: "DataProvider.networkHandler"))

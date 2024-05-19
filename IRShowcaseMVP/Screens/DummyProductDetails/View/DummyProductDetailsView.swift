@@ -9,28 +9,28 @@
 import SwiftUI
 
 struct DummyProductDetailsView : View {
-    private let presenter: DummyProductDetailsViewModel
-    @ObservedObject private var viewModel: DummyProductDetailsViewObservableObject
+    private let viewModel: DummyProductDetailsViewModel
+    @ObservedObject private var observableObject: DummyProductDetailsViewObservableObject
 
-    init(presenter: DummyProductDetailsViewModel) {
-        self.presenter = presenter
-        self.viewModel = presenter.observableObject
+    init(viewModel: DummyProductDetailsViewModel) {
+        self.viewModel = viewModel
+        self.observableObject = viewModel.observableObject
     }
 
     var body: some View {
         NavigationView {
             List {
                 ContentView(
-                    imageBasedOnProductRating: $viewModel.imageBasedOnProductRating,
-                    price: $viewModel.price,
-                    discountPercentage: $viewModel.discountPercentage,
-                    stock: $viewModel.stock,
-                    rating: $viewModel.rating
+                    imageBasedOnProductRating: $observableObject.imageBasedOnProductRating,
+                    price: $observableObject.price,
+                    discountPercentage: $observableObject.discountPercentage,
+                    stock: $observableObject.stock,
+                    rating: $observableObject.rating
                 )
                 .padding(.all, 15)
             }
-            .onAppear { self.presenter.onAppear() }
-            .navigationBarTitle(self.viewModel.title)
+            .onAppear { self.viewModel.onAppear() }
+            .navigationBarTitle(self.observableObject.title)
         }
     }
 }
@@ -58,7 +58,6 @@ private struct ContentView: View {
                     }
                 }
             }
-            //.frame(width: 124, height: 124)
             .clipShape(.rect(cornerRadius: 10))
             .frame(maxWidth: .infinity)
             .padding(.bottom, 10)
