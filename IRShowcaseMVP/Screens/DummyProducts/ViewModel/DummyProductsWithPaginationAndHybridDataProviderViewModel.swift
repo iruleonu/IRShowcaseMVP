@@ -9,6 +9,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import OrderedCollections
 
 final class DummyProductsWithPaginationAndHybridDataProviderViewModelImpl: DummyProductsViewModel {
     let routing: DummyProductsScreenRouting
@@ -141,7 +142,8 @@ private extension Publisher where Output == PageFetchType, Failure == Never {
                 break
             }
 
-            observableObject.dummyProducts = observableObject.dummyProducts + value.products
+            let orderedSet = OrderedSet(observableObject.dummyProducts).union(value.products)
+            observableObject.dummyProducts = Array(orderedSet)
             observableObject.pagingState = lastPage ? .noMorePagesToLoad : .loaded
             Swift.print("dataProviderSource: " + dataProviderSource.rawValue)
         })
