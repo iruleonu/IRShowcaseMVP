@@ -79,7 +79,10 @@ extension PersistenceLayerImpl: PersistenceLayerSave {
 
         // If the data continer has all the objects, save as a resource so that we have data
         // when fetching for the Resource .dummyProductsAll
-        let dataContainerHasAllTheObjects = object.limit + object.skip >= object.total
+        let paginatedTotal = object.limit + object.skip
+        let apiReportedTotal = object.total
+        let productsTotal = object.products.count
+        let dataContainerHasAllTheObjects = paginatedTotal >= apiReportedTotal && productsTotal >= apiReportedTotal
         if (dataContainerHasAllTheObjects) {
             let fileNameResourceDummyProductsAll = PersistenceLayerImpl.fileNameForResource(.dummyProductsAll)
             let (jsonForDummyProductsAllString, _) = JSONEncoder.encodeObjectToString(from: object, filename: fileNameResourceDummyProductsAll)
