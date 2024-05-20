@@ -73,8 +73,12 @@ private extension DummyProductsWithPaginationViewModelImpl {
     func setupBindings() {
         startFetchPublisher
             .buffer(size: 1, prefetch: .byRequest, whenFull: .dropNewest)
-            .handleEvents(receiveOutput: { output in
-                guard self.observableObject.pagingState != .noMorePagesToLoad else { return }
+            .filter({ [weak self] _ in
+                guard let self = self else { return false }
+                return !self.observableObject.pagingState.isFetching && self.observableObject.pagingState != .noMorePagesToLoad
+            })
+            .handleEvents(receiveOutput: { [weak self] output in
+                guard let self = self else { return }
                 self.observableObject.pagingState = (output == .initialPage) ? .loadingFirstPage : .loadingNextPage
             })
             .fetchPaginatedValue(
@@ -146,9 +150,9 @@ private extension Publisher where Output == PageFetchType, Failure == Never {
                 break
             }
 
+            observableObject.pagingState = lastPage ? .noMorePagesToLoad : .loaded
             let orderedSet = OrderedSet(observableObject.dummyProducts).union(value.products)
             observableObject.dummyProducts = Array(orderedSet)
-            observableObject.pagingState = lastPage ? .noMorePagesToLoad : .loaded
             Swift.print("dataProviderSource: " + dataProviderSource.rawValue)
         })
     }

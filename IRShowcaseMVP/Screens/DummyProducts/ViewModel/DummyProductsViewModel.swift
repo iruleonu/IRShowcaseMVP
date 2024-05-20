@@ -64,15 +64,21 @@ extension DummyProductsViewModelImpl {
 
 private extension DummyProductsViewModelImpl {
     func fetchDummyProducts() {
-        guard !observableObject.pagingState.isFetching else { return }
+        guard !observableObject.pagingState.isFetching,
+              self.observableObject.pagingState != .noMorePagesToLoad
+        else { return }
+
         observableObject.pagingState = .loadingFirstPage
 
         localDataProvider.fetchDummyProductsAll()
-            .catch({ _ in
+            .catch({ [weak self] _ in
+                guard let self = self else { return Empty<(DummyProductDataContainer, DataProviderSource), Error>().eraseToAnyPublisher() }
                 return self.remoteDataProvider.fetchDummyProductsAll().eraseToAnyPublisher()
             })
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { completion in
+            .sink(receiveCompletion: { [weak self] completion in
+                guard let self = self else { return }
+
                 switch completion {
                 case .finished:
                     break
@@ -91,7 +97,7 @@ private extension DummyProductsViewModelImpl {
                     break
                 }
 
-                observableObject.pagingState = .loaded
+                self.observableObject.pagingState = .noMorePagesToLoad
                 self.observableObject.dummyProducts = value.products
                 print("dataProviderSource: " + dataProviderSource.rawValue)
             })
