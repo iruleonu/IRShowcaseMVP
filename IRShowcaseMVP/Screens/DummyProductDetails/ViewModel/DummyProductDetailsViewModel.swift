@@ -35,14 +35,16 @@ protocol DummyProductDetailsViewModel {
 }
 
 final class DummyProductDetailsViewModelImpl: DummyProductDetailsViewModel {
-    var observableObject: DummyProductDetailsViewObservableObject
     private(set) var routing: DummyProductDetailsScreenRouting
+    var observableObject: DummyProductDetailsViewObservableObject
 
     init(routing: DummyProductDetailsScreenRouting, dummyProduct: DummyProduct) {
         self.observableObject = DummyProductDetailsViewObservableObject(dummyProduct: dummyProduct)
         self.routing = routing
     }
+}
 
+extension DummyProductDetailsViewModelImpl {
     func onAppear() {
         // do nothing
     }
