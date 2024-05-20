@@ -19,6 +19,6 @@ enum PagingState {
 
 extension PagingState {
     var isFetching: Bool {
-        return self == .loadingNextPage || self == .loadingNextPage
+        return self == .loadingFirstPage || self == .loadingNextPage
     }
 }

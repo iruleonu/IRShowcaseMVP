@@ -41,12 +41,17 @@ extension DummyProductsWithHybridDataProviderViewModelImpl {
 
 private extension DummyProductsWithHybridDataProviderViewModelImpl {
     func fetchDummyProducts() {
-        guard !observableObject.pagingState.isFetching else { return }
+        guard !observableObject.pagingState.isFetching,
+              self.observableObject.pagingState != .noMorePagesToLoad
+        else { return }
+
         observableObject.pagingState = .loadingFirstPage
 
         dataProvider.fetchDummyProductsAll()
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { completion in
+            .sink(receiveCompletion: { [weak self] completion in
+                guard let self = self else { return }
+                
                 switch completion {
                 case .finished:
                     break
@@ -65,8 +70,8 @@ private extension DummyProductsWithHybridDataProviderViewModelImpl {
                     break
                 }
 
+                self.observableObject.pagingState = .noMorePagesToLoad
                 self.observableObject.dummyProducts = value.products
-                self.observableObject.pagingState = .loaded
                 print("dataProviderSource: " + dataProviderSource.rawValue)
             })
             .store(in: &cancellables)
