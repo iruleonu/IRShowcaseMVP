@@ -36,20 +36,18 @@ private struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
-                ScrollViewReader { proxy in
-                    List($observableObject.dummyProducts, id: \.self, selection: $observableObject.selectedDummyProduct) { dummyProduct in
-                        NavigationLink {
-                            self.viewModel.onDummyProductTap(dummyProduct: dummyProduct.wrappedValue)
-                        } label: {
-                            DummyProductCell(dummyProduct: dummyProduct.wrappedValue)
-                        }
-                        .onAppear {
-                            self.viewModel.onItemAppear(dummyProduct.wrappedValue)
-                        }
+                List($observableObject.dummyProducts, id: \.self, selection: $observableObject.selectedDummyProduct) { dummyProduct in
+                    NavigationLink {
+                        self.viewModel.onDummyProductTap(dummyProduct: dummyProduct.wrappedValue)
+                    } label: {
+                        DummyProductCell(dummyProduct: dummyProduct.wrappedValue)
                     }
-                    if observableObject.pagingState.isFetching {
-                        ProgressView()
+                    .onAppear {
+                        self.viewModel.onItemAppear(dummyProduct.wrappedValue)
                     }
+                }
+                if observableObject.pagingState.isFetching {
+                    ProgressView()
                 }
             }
             .onAppear { self.viewModel.onAppear() }
