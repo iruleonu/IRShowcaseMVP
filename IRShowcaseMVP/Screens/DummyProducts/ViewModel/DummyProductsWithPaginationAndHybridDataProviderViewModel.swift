@@ -13,7 +13,7 @@ import OrderedCollections
 
 final class DummyProductsWithPaginationAndHybridDataProviderViewModelImpl: DummyProductsViewModel {
     let routing: DummyProductsScreenRouting
-    let dataProvider: DummyProductsLocalDataProvider
+    let dataProvider: DummyProductsFetchAndSaveDataProvider
     let paginationSize: Int
 
     var observableObject: DummyProductsViewObservableObject
@@ -24,7 +24,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelImpl: Dummy
 
     init(
         routing: DummyProductsScreenRouting,
-        dataProvider: DummyProductsLocalDataProvider,
+        dataProvider: DummyProductsFetchAndSaveDataProvider,
         paginationSize: Int
     ) {
         self.routing = routing
@@ -61,7 +61,7 @@ extension DummyProductsWithPaginationAndHybridDataProviderViewModelImpl {
     }
 
     func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView {
-        return self.routing.makeDummyProductDetailsView(dummyProduct: dummyProduct)
+        return routing.makeDummyProductDetailsView(dummyProduct: dummyProduct)
     }
 }
 
@@ -116,10 +116,9 @@ private extension Publisher where Output == PageFetchType, Failure == Never {
     func fetchPaginatedValue(
         paginator: PaginatorSingle<(DummyProductDataContainer, DataProviderSource)>,
         observableObject: DummyProductsViewObservableObject,
-        dataProvider: DummyProductsLocalDataProvider
+        dataProvider: DummyProductsFetchAndSaveDataProvider
     ) -> AnyCancellable {
-        self.compactMap({ return observableObject.pagingState != .loaded ? $0 : nil })
-        .flatMap({ pageFetchType in
+        self.flatMap({ pageFetchType in
             switch pageFetchType {
             case .initialPage:
                 return paginator.resetPaginationAndFetchInitialPage()
@@ -132,8 +131,9 @@ private extension Publisher where Output == PageFetchType, Failure == Never {
             switch completion {
             case .finished:
                 break
-            case .failure:
+            case .failure(let error):
                 observableObject.pagingState = .error
+                observableObject.errorViewLabel = error.buildString() ?? observableObject.errorViewLabel
                 observableObject.showErrorView = true
             }
         }, receiveValue: { tuple in
@@ -151,5 +151,32 @@ private extension Publisher where Output == PageFetchType, Failure == Never {
             observableObject.dummyProducts = Array(orderedSet)
             Swift.print("dataProviderSource: " + dataProviderSource.rawValue)
         })
+    }
+}
+
+private extension Error {
+    func buildString() -> String? {
+        switch self {
+        case let errorCast as DataProviderError:
+            switch errorCast {
+            case .casting:
+                return "Casting error in the DataProvider on DummyProductsWithPaginationAndHybridDataProviderViewModel"
+            case .parsing:
+                return "Parsing error in the DataProvider on DummyProductsWithPaginationAndHybridDataProviderViewModel"
+            default:
+                return "Error in the DataProvider on DummyProductsWithPaginationAndHybridDataProviderViewModel"
+            }
+        case let errorCast as APIServiceError:
+            switch errorCast {
+            case .parsing(let error):
+                return "Error parsing in the APIService on DummyProductsWithPaginationAndHybridDataProviderViewModel: " + error.localizedDescription
+            default:
+                return "Error in the APIService on DummyProductsWithPaginationAndHybridDataProviderViewModel"
+            }
+        default:
+            break
+        }
+
+        return nil
     }
 }

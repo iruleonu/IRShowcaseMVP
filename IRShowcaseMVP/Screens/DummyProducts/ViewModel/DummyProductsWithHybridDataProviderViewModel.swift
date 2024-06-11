@@ -12,14 +12,14 @@ import Combine
 
 final class DummyProductsWithHybridDataProviderViewModelImpl: DummyProductsViewModel {
     private let routing: DummyProductsScreenRouting
-    private let dataProvider: DummyProductsLocalDataProvider
+    private let dataProvider: DummyProductsFetchAndSaveDataProvider
     var observableObject: DummyProductsViewObservableObject
 
     private var cancellables = Set<AnyCancellable>()
 
     init(
         routing: DummyProductsScreenRouting,
-        dataProvider: DummyProductsLocalDataProvider
+        dataProvider: DummyProductsFetchAndSaveDataProvider
     ) {
         self.routing = routing
         self.dataProvider = dataProvider
@@ -55,8 +55,9 @@ private extension DummyProductsWithHybridDataProviderViewModelImpl {
                 switch completion {
                 case .finished:
                     break
-                case .failure:
+                case .failure(let error):
                     self.observableObject.pagingState = .error
+                    self.observableObject.errorViewLabel = error.buildString() ?? observableObject.errorViewLabel
                     self.observableObject.showErrorView = true
                 }
             }, receiveValue: { [weak self] tuple in
@@ -75,5 +76,32 @@ private extension DummyProductsWithHybridDataProviderViewModelImpl {
                 print("dataProviderSource: " + dataProviderSource.rawValue)
             })
             .store(in: &cancellables)
+    }
+}
+
+private extension Error {
+    func buildString() -> String? {
+        switch self {
+        case let errorCast as DataProviderError:
+            switch errorCast {
+            case .casting:
+                return "Casting error in the DataProvider on DummyProductsWithHybridDataProviderViewModel"
+            case .parsing:
+                return "Parsing error in the DataProvider on DummyProductsWithHybridDataProviderViewModel"
+            default:
+                return "Error in the DataProvider on DummyProductsWithHybridDataProviderViewModel"
+            }
+        case let errorCast as APIServiceError:
+            switch errorCast {
+            case .parsing(let error):
+                return "Error parsing in the APIService on DummyProductsWithHybridDataProviderViewModel: " + error.localizedDescription
+            default:
+                return "Error in the APIService on DummyProductsWithHybridDataProviderViewModel"
+            }
+        default:
+            break
+        }
+
+        return nil
     }
 }

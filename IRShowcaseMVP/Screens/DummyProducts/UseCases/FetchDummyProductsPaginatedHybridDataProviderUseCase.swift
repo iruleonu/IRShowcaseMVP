@@ -11,7 +11,7 @@ import Combine
 
 protocol FetchDummyProductsPaginatedHybridDataProviderUseCase {
     func execute(
-        dataProvider: DummyProductsLocalDataProvider,
+        dataProvider: DummyProductsFetchAndSaveDataProvider,
         pageSize: Int,
         page: Int
     ) -> AnyPublisher<(data: (DummyProductDataContainer, DataProviderSource), isLastPage: Bool), Error>
@@ -19,7 +19,7 @@ protocol FetchDummyProductsPaginatedHybridDataProviderUseCase {
 
 struct FetchDummyProductsPaginatedHybridDataProviderUseCaseImpl: FetchDummyProductsPaginatedHybridDataProviderUseCase {
     func execute(
-        dataProvider: DummyProductsLocalDataProvider,
+        dataProvider: DummyProductsFetchAndSaveDataProvider,
         pageSize: Int,
         page: Int
     ) -> AnyPublisher<(data: (DummyProductDataContainer, DataProviderSource), isLastPage: Bool), Error> {

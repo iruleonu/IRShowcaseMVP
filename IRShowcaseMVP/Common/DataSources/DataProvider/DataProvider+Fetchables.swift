@@ -74,4 +74,4 @@ extension DataProvider: FetchDummyProductsProtocol {
     }
 }
 
-extension DataProvider: DummyProductsLocalDataProvider {}
+extension DataProvider: DummyProductsFetchAndSaveDataProvider {}

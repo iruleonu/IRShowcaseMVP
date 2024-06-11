@@ -12,11 +12,11 @@ struct DummyProduct: Codable, Hashable, Identifiable {
     let id: Int
     let title: String
     let description: String
-    let price: Int
+    let price: Float
     let discountPercentage: Float
     let rating: Float
     let stock: Float
-    let brand: String
+    let brand: String?
     let category: String
     let thumbnail: String
     let images: [String]
@@ -26,11 +26,11 @@ struct DummyProduct: Codable, Hashable, Identifiable {
         let id = try container.decode(Int.self, forKey: .id)
         let title = try container.decode(String.self, forKey: .title)
         let description = try container.decode(String.self, forKey: .description)
-        let price = try container.decode(Int.self, forKey: .price)
+        let price = try container.decode(Float.self, forKey: .price)
         let discountPercentage = try container.decode(Float.self, forKey: .discountPercentage)
         let rating = try container.decode(Float.self, forKey: .rating)
         let stock = try container.decode(Float.self, forKey: .stock)
-        let brand = try container.decode(String.self, forKey: .brand)
+        let brand = try? container.decode(String.self, forKey: .brand)
         let category = try container.decode(String.self, forKey: .category)
         let thumbnail = try container.decode(String.self, forKey: .thumbnail)
         let images = try container.decode([String].self, forKey: .images)
@@ -53,11 +53,11 @@ struct DummyProduct: Codable, Hashable, Identifiable {
         id: Int,
         title: String,
         description: String,
-        price: Int,
+        price: Float,
         discountPercentage: Float,
         rating: Float,
         stock: Float,
-        brand: String,
+        brand: String?,
         category: String,
         thumbnail: String,
         images: [String]

@@ -11,7 +11,7 @@ import Combine
 
 protocol FetchDummyProductsPaginatedUseCase {
     func execute(
-        localDataProvider: DummyProductsLocalDataProvider,
+        localDataProvider: DummyProductsFetchAndSaveDataProvider,
         remoteDataProvider: FetchDummyProductsProtocol,
         pageSize: Int,
         page: Int
@@ -20,7 +20,7 @@ protocol FetchDummyProductsPaginatedUseCase {
 
 struct FetchDummyProductsPaginatedUseCaseImpl: FetchDummyProductsPaginatedUseCase {
     func execute(
-        localDataProvider: DummyProductsLocalDataProvider,
+        localDataProvider: DummyProductsFetchAndSaveDataProvider,
         remoteDataProvider: FetchDummyProductsProtocol,
         pageSize: Int,
         page: Int
