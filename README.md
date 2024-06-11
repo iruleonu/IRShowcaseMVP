@@ -1,3 +1,5 @@
+[![ios with xcode 15](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml/badge.svg)](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml)
+
 # CV using SwiftUI + Combine
 
 Follows the same project structure as [IRShowcase](https://github.com/iruleonu/IRShowcase). 

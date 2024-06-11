@@ -1,0 +1,76 @@
+name: iOS build and tests
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "develop" ]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Install homebrew dependencies and cache them
+        uses: tecolicom/actions-use-homebrew-tools@v1
+        with:
+          tools: sourcery xcbeautify
+      - name: Generate mocks as the generated file it's included in the gitignore
+        run: find . -name 'mocky.yml' -exec $(brew --prefix sourcery)/bin/sourcery --config {} \;    
+      - name: Set Xcode 15.4.0
+        run: sudo xcode-select -s /Applications/Xcode_15.4.0.app/Contents/Developer
+      #- name: Set Default Scheme
+      #  run: |
+      #    scheme_list=$(xcodebuild -list -json | tr -d "\n")
+      #    default=$(echo $scheme_list | ruby -e "require 'json'; puts JSON.parse(STDIN.gets)['project']['targets'][0]")
+      #    echo $default | cat >default
+      #    echo Using default scheme: $default
+      - name: Set Scheme
+        run: |
+          default=IRShowcaseMVP
+          echo $default | cat >default
+          echo Using scheme: $default
+      - name: Find and boot the iPhone 14
+        run: |
+          # Using xcrun to find the list of devices
+          # Choose first device available on the host
+          #device=`xcrun xctrace list devices 2>&1 | grep -oE 'iPhone.*?[^\(]+' | head -1 | awk '{$1=$1;print}' | sed -e "s/ Simulator$//"`
+          device='iPhone 14'
+          deviceUUID=$(xcrun xctrace list devices 2>&1 | grep -o "iPhone 14 Simulator [^&]*" | head -1 | awk '{print $5}' | tr -d "()")
+          echo $deviceUUID | cat >deviceUUID
+          echo Setting deviceUUID: $deviceUUID
+      - name: Boot the device with the UUID of the previous step
+        env:
+          deviceUUID: ${{ 'deviceUUID' }}
+        run: |
+          if [ $deviceUUID = deviceUUID ]; then deviceUUID=$(cat deviceUUID); fi
+          xcrun simctl boot $deviceUUID
+      - name: Build scheme to generate the test bundle
+        env:
+          scheme: ${{ 'default' }}
+          platform: ${{ 'iOS Simulator' }}
+          deviceUUID: ${{ 'deviceUUID' }}
+        run: |
+          # xcrun xctrace returns via stderr, not the expected stdout (see https://developer.apple.com/forums/thread/663959)
+          if [ $scheme = default ]; then scheme=$(cat default); fi
+          if [ $deviceUUID = deviceUUID ]; then deviceUUID=$(cat deviceUUID); fi
+          if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
+          file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
+          set -o pipefail && xcodebuild build-for-testing -scheme "$scheme" -"$filetype_parameter" "$file_to_build" -destination "platform=$platform,id=$deviceUUID" | xcbeautify --renderer github-actions
+      - name: Test
+        env:
+          scheme: ${{ 'default' }}
+          platform: ${{ 'iOS Simulator' }}
+          deviceUUID: ${{ 'deviceUUID' }}
+        run: |
+          # xcrun xctrace returns via stderr, not the expected stdout (see https://developer.apple.com/forums/thread/663959)
+          if [ $scheme = default ]; then scheme=$(cat default); fi
+          if [ $deviceUUID = deviceUUID ]; then deviceUUID=$(cat deviceUUID); fi
+          if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
+          file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
+          set -o pipefail && xcodebuild test-without-building -scheme "$scheme" -"$filetype_parameter" "$file_to_build" -destination "platform=$platform,id=$deviceUUID" | xcbeautify --renderer github-actions

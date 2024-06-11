@@ -875,7 +875,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "find . -name 'mocky.yml' -exec SwiftyMocky/sourcery --config {} \\;\n";
+			shellScript = "find . -name 'mocky.yml' -exec /opt/homebrew/opt/sourcery/bin/sourcery --config {} \\;\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
