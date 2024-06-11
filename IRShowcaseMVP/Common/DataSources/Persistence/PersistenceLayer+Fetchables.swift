@@ -33,4 +33,4 @@ extension PersistenceLayerImpl: FetchDummyProductsProtocol {
     }
 }
 
-extension PersistenceLayerImpl: DummyProductsLocalDataProvider {}
+extension PersistenceLayerImpl: DummyProductsFetchAndSaveDataProvider {}
