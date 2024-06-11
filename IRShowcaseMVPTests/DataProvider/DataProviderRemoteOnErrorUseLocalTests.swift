@@ -70,8 +70,8 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                             return publisher.eraseToAnyPublisher()
                         }()
                         ))
-
-                        waitUntil(action: { (done) in
+                        
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -108,7 +108,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -144,7 +144,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -194,7 +194,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -244,7 +244,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in

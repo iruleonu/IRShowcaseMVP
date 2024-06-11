@@ -70,7 +70,7 @@ class DataProviderLocalThenRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             var invocationsCount = 0;
                             
                             dataProvider
@@ -117,7 +117,7 @@ class DataProviderLocalThenRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -151,7 +151,7 @@ class DataProviderLocalThenRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -201,7 +201,7 @@ class DataProviderLocalThenRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -250,7 +250,7 @@ class DataProviderLocalThenRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             var invocationsCount = 0;
 
                             dataProvider

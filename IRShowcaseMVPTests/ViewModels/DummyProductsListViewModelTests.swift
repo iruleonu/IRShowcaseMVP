@@ -28,7 +28,7 @@ final class DummyProductsListViewModelTests: TestCase {
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
         let routingMock = DummyProductsScreenRoutingMock()
-        let localDataProviderMock = DummyProductsLocalDataProviderMock()
+        let localDataProviderMock = DummyProductsFetchAndSaveDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
         subject = DummyProductsViewModelImpl(
             routing: routingMock,
@@ -76,7 +76,7 @@ final class DummyProductsListViewModelTests: TestCase {
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
         let routingMock = DummyProductsScreenRoutingMock()
-        let localDataProviderMock = DummyProductsLocalDataProviderMock()
+        let localDataProviderMock = DummyProductsFetchAndSaveDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
         subject = DummyProductsViewModelImpl(
             routing: routingMock,
@@ -123,7 +123,7 @@ final class DummyProductsListViewModelTests: TestCase {
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
         let routingMock = DummyProductsScreenRoutingMock()
-        let localDataProviderMock = DummyProductsLocalDataProviderMock()
+        let localDataProviderMock = DummyProductsFetchAndSaveDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
         subject = DummyProductsViewModelImpl(
             routing: routingMock,

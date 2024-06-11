@@ -70,7 +70,7 @@ class DataProviderLocalOnErrorRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -104,7 +104,7 @@ class DataProviderLocalOnErrorRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -138,7 +138,7 @@ class DataProviderLocalOnErrorRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -188,7 +188,7 @@ class DataProviderLocalOnErrorRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
@@ -237,7 +237,7 @@ class DataProviderLocalOnErrorRemoteTests: QuickSpec {
                         }()
                         ))
 
-                        waitUntil(action: { (done) in
+                        waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
                                 .fetchStuff(resource: .babyNamePopularities)
                                 .sink { completion in
