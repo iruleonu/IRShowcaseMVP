@@ -1,6 +1,6 @@
 [![ios with xcode 15](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml/badge.svg)](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml)
 
-# CV using SwiftUI + Combine
+# Showcase using SwiftUI + Combine
 
 Follows the same project structure as [IRShowcase](https://github.com/iruleonu/IRShowcase). 
 
@@ -20,5 +20,3 @@ It's possible to make it a hybrid data provider where it fetches both locally an
 * There's tests for logic, providers and UI tests.
 
 * DummyProductsListViewPresenterTests has tests making sure if there's valid results locally then there's no remote fetch
-
-* There's no pagination support for now 
