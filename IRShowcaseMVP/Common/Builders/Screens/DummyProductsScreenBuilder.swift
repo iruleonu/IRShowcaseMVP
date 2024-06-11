@@ -20,7 +20,7 @@ protocol DummyProductsScreenChildBuilders {
 
 struct DummyProductsScreenBuilder {
     func make(
-        localDataProvider: DummyProductsLocalDataProvider,
+        localDataProvider: DummyProductsFetchAndSaveDataProvider,
         remoteDataProvider: FetchDummyProductsProtocol
     ) -> DummyProductsView {
         let coordinator = DummyProductsScreenCoordinator(builders: self)
@@ -32,7 +32,7 @@ struct DummyProductsScreenBuilder {
         return DummyProductsView(viewModel: viewModel)
     }
 
-    func make(dataProvider: DummyProductsLocalDataProvider) -> DummyProductsView {
+    func make(dataProvider: DummyProductsFetchAndSaveDataProvider) -> DummyProductsView {
         let coordinator = DummyProductsScreenCoordinator(builders: self)
         let viewModel = DummyProductsWithHybridDataProviderViewModelImpl(
             routing: coordinator,
@@ -42,7 +42,7 @@ struct DummyProductsScreenBuilder {
     }
 
     func makeUsingPaginatedViewModel(
-        localDataProvider: DummyProductsLocalDataProvider,
+        localDataProvider: DummyProductsFetchAndSaveDataProvider,
         remoteDataProvider: FetchDummyProductsProtocol,
         paginationSize: Int
     ) -> DummyProductsView {
@@ -57,7 +57,7 @@ struct DummyProductsScreenBuilder {
     }
 
     func makeUsingPaginatedViewModel(
-        hybridDataProvider: DummyProductsLocalDataProvider,
+        hybridDataProvider: DummyProductsFetchAndSaveDataProvider,
         paginationSize: Int
     ) -> DummyProductsView {
         let coordinator = DummyProductsScreenCoordinator(builders: self)

@@ -28,11 +28,11 @@ protocol DummyProductsViewModel {
 }
 
 // sourcery: AutoMockable
-protocol DummyProductsLocalDataProvider: FetchDummyProductsProtocol, PersistenceLayerSave {}
+protocol DummyProductsFetchAndSaveDataProvider: FetchDummyProductsProtocol, PersistenceLayerSave {}
 
 final class DummyProductsViewModelImpl: DummyProductsViewModel {
     private let routing: DummyProductsScreenRouting
-    private let localDataProvider: DummyProductsLocalDataProvider
+    private let localDataProvider: DummyProductsFetchAndSaveDataProvider
     private let remoteDataProvider: FetchDummyProductsProtocol
     
     var observableObject: DummyProductsViewObservableObject
@@ -40,7 +40,7 @@ final class DummyProductsViewModelImpl: DummyProductsViewModel {
 
     init(
         routing: DummyProductsScreenRouting,
-        localDataProvider: DummyProductsLocalDataProvider,
+        localDataProvider: DummyProductsFetchAndSaveDataProvider,
         remoteDataProvider: FetchDummyProductsProtocol
     ) {
         self.routing = routing
@@ -82,8 +82,9 @@ private extension DummyProductsViewModelImpl {
                 switch completion {
                 case .finished:
                     break
-                case .failure:
+                case .failure(let error):
                     self.observableObject.pagingState = .error
+                    self.observableObject.errorViewLabel = error.buildString() ?? self.observableObject.errorViewLabel
                     self.observableObject.showErrorView = true
                 }
             }, receiveValue: { [weak self] tuple in
@@ -102,5 +103,32 @@ private extension DummyProductsViewModelImpl {
                 print("dataProviderSource: " + dataProviderSource.rawValue)
             })
             .store(in: &cancellables)
+    }
+}
+
+private extension Error {
+    func buildString() -> String? {
+        switch self {
+        case let errorCast as DataProviderError:
+            switch errorCast {
+            case .casting:
+                return "Casting error in the DataProvider on DummyProductsViewModel"
+            case .parsing:
+                return "Parsing error in the DataProvider on DummyProductsViewModel"
+            default:
+                return "Error in the DataProvider on DummyProductsViewModel"
+            }
+        case let errorCast as APIServiceError:
+            switch errorCast {
+            case .parsing(let error):
+                return "Error parsing in the APIService on DummyProductsViewModel: " + error.localizedDescription
+            default:
+                return "Error in the APIService on DummyProductsViewModel"
+            }
+        default:
+            break
+        }
+
+        return nil
     }
 }
