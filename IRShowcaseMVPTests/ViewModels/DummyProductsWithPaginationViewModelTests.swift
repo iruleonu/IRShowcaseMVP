@@ -28,7 +28,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
         let routingMock = DummyProductsScreenRoutingMock()
-        let localDataProviderMock = DummyProductsLocalDataProviderMock()
+        let localDataProviderMock = DummyProductsFetchAndSaveDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
         subject = DummyProductsWithPaginationViewModelImpl(
             routing: routingMock,
@@ -78,7 +78,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
         let routingMock = DummyProductsScreenRoutingMock()
-        let localDataProviderMock = DummyProductsLocalDataProviderMock()
+        let localDataProviderMock = DummyProductsFetchAndSaveDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
         subject = DummyProductsWithPaginationViewModelImpl(
             routing: routingMock,
@@ -126,7 +126,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
         let routingMock = DummyProductsScreenRoutingMock()
-        let localDataProviderMock = DummyProductsLocalDataProviderMock()
+        let localDataProviderMock = DummyProductsFetchAndSaveDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
         subject = DummyProductsWithPaginationViewModelImpl(
             routing: routingMock,
@@ -172,7 +172,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
         let routingMock = DummyProductsScreenRoutingMock()
-        let localDataProviderMock = DummyProductsLocalDataProviderMock()
+        let localDataProviderMock = DummyProductsFetchAndSaveDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
         subject = DummyProductsWithPaginationViewModelImpl(
             routing: routingMock,
@@ -247,7 +247,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
         let routingMock = DummyProductsScreenRoutingMock()
-        let localDataProviderMock = DummyProductsLocalDataProviderMock()
+        let localDataProviderMock = DummyProductsFetchAndSaveDataProviderMock()
         let remoteDataProviderMock = FetchDummyProductsProtocolMock()
         subject = DummyProductsWithPaginationViewModelImpl(
             routing: routingMock,
