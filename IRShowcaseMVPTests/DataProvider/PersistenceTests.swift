@@ -15,16 +15,16 @@ import Combine
 
 class PersistenceTests: XCTestCase {
     private var persistence: PersistenceLayerMock!
-    private var persistenceLoadHandler: DataProviderHandlers<BabyNamePopularityDataContainer>.PersistenceLoadHandler!
-    private var persistenceSaveHandler: DataProviderHandlers<BabyNamePopularityDataContainer>.PersistenceSaveHandler!
-    private var persistenceRemoveHandler: DataProviderHandlers<BabyNamePopularityDataContainer>.PersistenceRemoveHandler!
+    private var persistenceLoadHandler: DataProviderHandlers<DummyProductDataContainer>.PersistenceLoadHandler!
+    private var persistenceSaveHandler: DataProviderHandlers<DummyProductDataContainer>.PersistenceSaveHandler!
+    private var persistenceRemoveHandler: DataProviderHandlers<DummyProductDataContainer>.PersistenceRemoveHandler!
     private var cancellables: Set<AnyCancellable>!
 
     override func setUp() {
         super.setUp()
         cancellables = Set<AnyCancellable>()
         persistence = PersistenceLayerMock()
-        let dpHandlersBuilder = DataProviderHandlersBuilder<BabyNamePopularityDataContainer>()
+        let dpHandlersBuilder = DataProviderHandlersBuilder<DummyProductDataContainer>()
         persistenceLoadHandler = dpHandlersBuilder.standardPersistenceLoadHandler
         persistenceSaveHandler = dpHandlersBuilder.standardPersistenceSaveHandler
         persistenceRemoveHandler = dpHandlersBuilder.standardPersistenceRemoveHandler
@@ -47,13 +47,13 @@ class PersistenceTests: XCTestCase {
             .fetchResource(
                 .any,
                 willReturn: {
-                    let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                    return CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(babyNamePopularities).eraseToAnyPublisher()
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    return CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer).eraseToAnyPublisher()
                 }()
             )
         )
 
-        persistenceLoadHandler(persistence, .babyNamePopularities)
+        persistenceLoadHandler(persistence, .dummyProductsAll)
             .sink { completion in
                 switch completion {
                 case .finished:
@@ -61,8 +61,8 @@ class PersistenceTests: XCTestCase {
                 case .failure:
                     XCTFail()
                 }
-            } receiveValue: { babyNames in
-                XCTAssertTrue(babyNames.babyNamePopularityRepresentation.count > 0)
+            } receiveValue: { values in
+                XCTAssertTrue(values.products.count > 0)
                 expectation.fulfill()
             }
             .store(in: &cancellables)
@@ -77,15 +77,14 @@ class PersistenceTests: XCTestCase {
             .fetchResource(
                 .any,
                 willReturn: {
-                    let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                    let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(babyNamePopularities)
+                    let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
                     publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "No known resource"))))
                     return publisher.eraseToAnyPublisher()
                 }()
             )
         )
 
-        persistenceLoadHandler(persistence, .babyNamePopularities)
+        persistenceLoadHandler(persistence, .dummyProductsAll)
             .sink { completion in
                 switch completion {
                 case .finished:
@@ -108,14 +107,14 @@ class PersistenceTests: XCTestCase {
             .fetchResource(
                 .any,
                 willReturn: {
-                    let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
+                    let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
                     publisher.send(completion: .failure(PersistenceLayerError.emptyResult(error: NSError.error(withMessage: "No results"))))
                     return publisher.eraseToAnyPublisher()
                 }()
             )
         )
 
-        persistenceLoadHandler(persistence, .babyNamePopularities)
+        persistenceLoadHandler(persistence, .dummyProductsAll)
             .sink { completion in
                 switch completion {
                 case .finished:
@@ -133,11 +132,11 @@ class PersistenceTests: XCTestCase {
         let expectation = self.expectation(description: "Expected success when saving")
         defer { self.waitForExpectations(timeout: 3.0, handler: nil) }
 
-        persistence.perform(.persistObjects(Parameter<BabyNamePopularityDataContainer>.any, saveCompletion: .any, perform: { _, block in
+        persistence.perform(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any, perform: { _, block in
             block(true, nil)
         }))
 
-        persistenceSaveHandler(persistence, .init(data: []))
+        persistenceSaveHandler(persistence, .stub())
             .sink { completion in
                 switch completion {
                 case .finished:
@@ -155,12 +154,12 @@ class PersistenceTests: XCTestCase {
         let expectation = self.expectation(description: "Expected failure when there was an error saving")
         defer { self.waitForExpectations(timeout: 3.0, handler: nil) }
 
-        persistence.perform(.persistObjects(Parameter<BabyNamePopularityDataContainer>.any, saveCompletion: .any, perform: { _, block in
+        persistence.perform(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any, perform: { _, block in
             let error = PersistenceLayerError.emptyResult(error: NSError.error(withMessage: "Error"))
             block(false, error)
         }))
 
-        persistenceSaveHandler(persistence, .init(data: []))
+        persistenceSaveHandler(persistence, .stub())
             .sink { completion in
                 switch completion {
                 case .finished:
@@ -189,7 +188,7 @@ class PersistenceTests: XCTestCase {
             )
         )
 
-        persistenceRemoveHandler(persistence, .babyNamePopularities)
+        persistenceRemoveHandler(persistence, .dummyProductsAll)
             .sink { completion in
                 switch completion {
                 case .finished:
@@ -220,7 +219,7 @@ class PersistenceTests: XCTestCase {
             )
         )
 
-        persistenceRemoveHandler(persistence, .babyNamePopularities)
+        persistenceRemoveHandler(persistence, .dummyProductsAll)
             .sink { completion in
                 switch completion {
                 case .finished:
@@ -232,5 +231,16 @@ class PersistenceTests: XCTestCase {
                 XCTFail()
             }
             .store(in: &cancellables)
+    }
+}
+
+private extension DummyProductDataContainer {
+    static func stub() -> DummyProductDataContainer {
+        .init(
+            total: 0,
+            skip: 0,
+            limit: 0,
+            products: []
+        )
     }
 }

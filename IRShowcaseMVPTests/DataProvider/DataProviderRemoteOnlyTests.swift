@@ -17,14 +17,14 @@ import Combine
 class DataProviderRemoteOnlyTests: QuickSpec {
     override class func spec() {
         describe("DataProvidersTests") {
-            var remoteDataProvider: DataProvider<BabyNamePopularityDataContainer>!
+            var remoteDataProvider: DataProvider<DummyProductDataContainer>!
             let network = APIServiceMock()
             let persistence = PersistenceLayerMock()
             var cancellables: Set<AnyCancellable>!
 
             beforeEach {
                 let remoteConfig = DataProviderConfiguration.remoteOnly
-                let rdp: DataProvider<BabyNamePopularityDataContainer> = DataProviderBuilder.makeDataProvider(config: remoteConfig, network: network, persistence: persistence)
+                let rdp: DataProvider<DummyProductDataContainer> = DataProviderBuilder.makeDataProvider(config: remoteConfig, network: network, persistence: persistence)
                 remoteDataProvider = rdp
                 cancellables = Set<AnyCancellable>()
             }
@@ -37,15 +37,15 @@ class DataProviderRemoteOnlyTests: QuickSpec {
             describe("remote data provider") {
                 context("fetch stuff method") {
                     it("should get a success result on the happy path") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                             var data: Data? = nil
                             do {
-                                let jsonData = try JSONEncoder().encode(babyNamePopularities)
+                                let jsonData = try JSONEncoder().encode(dataContainer)
                                 data = jsonData
                             } catch { }
 
@@ -61,7 +61,7 @@ class DataProviderRemoteOnlyTests: QuickSpec {
 
                         waitUntil(timeout: .seconds(5), action: { (done) in
                             remoteDataProvider
-                                .fetchStuff(resource: .babyNamePopularities)
+                                .fetchStuff(resource: .dummyProductsAll)
                                 .sink { completion in
                                     switch completion {
                                     case .finished:
@@ -70,7 +70,7 @@ class DataProviderRemoteOnlyTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
+                                    expect(values.0.products.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -78,7 +78,7 @@ class DataProviderRemoteOnlyTests: QuickSpec {
                     }
 
                     it("should fail before the parsing step when receives generic/empty data") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
@@ -89,7 +89,7 @@ class DataProviderRemoteOnlyTests: QuickSpec {
 
                         waitUntil(timeout: .seconds(5), action: { (done) in
                             remoteDataProvider
-                                .fetchStuff(resource: .babyNamePopularities)
+                                .fetchStuff(resource: .dummyProductsAll)
                                 .sink { completion in
                                     switch completion {
                                     case .finished:
