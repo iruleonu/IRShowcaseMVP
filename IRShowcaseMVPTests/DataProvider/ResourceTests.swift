@@ -13,14 +13,14 @@ import XCTest
 
 class ResourceTests: XCTestCase {
     func testEqualityForSameResource() {
-        let resource1 = Resource.babyNamePopularities
-        let resource2 = Resource.babyNamePopularities
+        let resource1 = Resource.dummyProductsAll
+        let resource2 = Resource.dummyProductsAll
         XCTAssertEqual(resource1, resource2)
     }
 
     func testInequalityForDifferentResource() {
         let resource1 = Resource.unknown
-        let resource2 = Resource.babyNamePopularities
+        let resource2 = Resource.dummyProductsAll
         XCTAssertNotEqual(resource1, resource2)
         XCTAssertNotEqual(resource2, resource1)
     }

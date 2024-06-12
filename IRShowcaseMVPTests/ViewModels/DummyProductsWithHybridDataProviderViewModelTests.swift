@@ -48,7 +48,7 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
         }()
         ))
 
-        Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
         Given(networkMock, .fetchData( request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
@@ -120,7 +120,7 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
         }()
         ))
 
-        Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
         Given(networkMock, .fetchData( request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
             publisher.send(completion: .failure(DataProviderError.noConnectivity))
@@ -178,7 +178,7 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
         }()
         ))
 
-        Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
         Given(networkMock, .fetchData( request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
             publisher.send(completion: .failure(DataProviderError.noConnectivity))
