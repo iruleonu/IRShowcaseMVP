@@ -16,13 +16,13 @@ import Combine
 class NetworkTests: XCTestCase {
     private var cancellables: Set<AnyCancellable>!
     private var network: APIServiceMock!
-    private var networkHandler: DataProviderHandlers<[BabyNamePopularity]>.NetworkHandler!
+    private var networkHandler: DataProviderHandlers<DummyProductDataContainer>.NetworkHandler!
 
     override func setUp() {
         super.setUp()
         cancellables = Set<AnyCancellable>()
         network = APIServiceMock()
-        let dpHandlersBuilder = DataProviderHandlersBuilder<[BabyNamePopularity]>()
+        let dpHandlersBuilder = DataProviderHandlersBuilder<DummyProductDataContainer>()
         networkHandler = dpHandlersBuilder.standardNetworkHandler
     }
 
@@ -38,7 +38,7 @@ class NetworkTests: XCTestCase {
 
         Given(
             network,
-            .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!))
+            .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!))
         )
 
         Given(
@@ -49,7 +49,7 @@ class NetworkTests: XCTestCase {
             )
         )
 
-        networkHandler(network,network.buildUrlRequest(resource: .unknown))
+        networkHandler(network,network.buildUrlRequest(resource: .dummyProductsAll))
                 .sink { completion in
                     XCTFail()
                 } receiveValue: { babyNames in
@@ -64,7 +64,7 @@ class NetworkTests: XCTestCase {
 
         Given(
             network,
-            .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!))
+            .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!))
         )
 
         let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
@@ -77,7 +77,7 @@ class NetworkTests: XCTestCase {
             )
         )
 
-        networkHandler(network,network.buildUrlRequest(resource: .unknown))
+        networkHandler(network,network.buildUrlRequest(resource: .dummyProductsAll))
                 .sink { completion in
                     expectation.fulfill()
                 } receiveValue: { babyNames in

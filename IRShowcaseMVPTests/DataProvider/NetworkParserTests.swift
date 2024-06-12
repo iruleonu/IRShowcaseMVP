@@ -25,25 +25,25 @@ class NetworkParserTests: XCTestCase {
         let expectation = self.expectation(description: "Expected to decode/encode properly")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
 
-        let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-        XCTAssertTrue(babyNamePopularities.babyNamePopularityRepresentation.count > 0)
+        let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+        XCTAssertTrue(dataContainer.products.count > 0)
         var data: Data? = nil
 
         do {
-            let jsonData = try JSONEncoder().encode(babyNamePopularities)
+            let jsonData = try JSONEncoder().encode(dataContainer)
             data = jsonData
         } catch { XCTFail() }
 
         XCTAssertNotNil(data)
 
-        let dpHandlersBuilder = DataProviderHandlersBuilder<BabyNamePopularityDataContainer>()
+        let dpHandlersBuilder = DataProviderHandlersBuilder<DummyProductDataContainer>()
         let networkParser = dpHandlersBuilder.standardNetworkParserHandler
 
         networkParser(data!)
             .sink { completion in
                 // do nothing
-            } receiveValue: { babyNames in
-                XCTAssertTrue(babyNames.babyNamePopularityRepresentation.count == babyNamePopularities.babyNamePopularityRepresentation.count)
+            } receiveValue: { values in
+                XCTAssertTrue(values.products.count == dataContainer.products.count)
                 expectation.fulfill()
             }
             .store(in: &cancellables)
@@ -54,7 +54,7 @@ class NetworkParserTests: XCTestCase {
         defer { self.waitForExpectations(timeout: 3.0, handler: nil) }
 
         let data: Data? = NSData() as Data
-        let dpHandlersBuilder = DataProviderHandlersBuilder<[BabyNamePopularity]>()
+        let dpHandlersBuilder = DataProviderHandlersBuilder<DummyProductDataContainer>()
         let networkParser = dpHandlersBuilder.standardNetworkParserHandler
 
         networkParser(data!)

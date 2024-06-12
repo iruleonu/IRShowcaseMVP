@@ -17,13 +17,13 @@ import Combine
 class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
     override class func spec() {
         describe("DataProvidersTests") {
-            var dataProvider: DataProvider<BabyNamePopularityDataContainer>!
+            var dataProvider: DataProvider<DummyProductDataContainer>!
             let network = APIServiceMock()
             let persistence = PersistenceLayerMock()
             var cancellables: Set<AnyCancellable>!
 
             beforeEach {
-                let hrdp: DataProvider<BabyNamePopularityDataContainer> = DataProviderBuilder.makeDataProvider(
+                let hrdp: DataProvider<DummyProductDataContainer> = DataProviderBuilder.makeDataProvider(
                     config: DataProviderConfiguration.remoteOnErrorUseLocal,
                     network: network,
                     persistence: persistence
@@ -40,13 +40,13 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
             describe("remote and on error use local data provider") {
                 context("fetch stuff method") {
                     it("should get a success result on the happy path") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-                        
+                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(babyNamePopularities)
+                                let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
                                 return publisher.eraseToAnyPublisher()
                             }()
                         ))
@@ -54,10 +54,10 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                             var data: Data? = nil
                             do {
-                                let jsonData = try JSONEncoder().encode(babyNamePopularities)
+                                let jsonData = try JSONEncoder().encode(dataContainer)
                                 data = jsonData
                             } catch { }
 
@@ -73,7 +73,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                         
                         waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
-                                .fetchStuff(resource: .babyNamePopularities)
+                                .fetchStuff(resource: .dummyProductsAll)
                                 .sink { completion in
                                     switch completion {
                                     case .finished:
@@ -82,7 +82,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
+                                    expect(values.0.products.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -90,12 +90,12 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                     }
 
                     it("should error if both layers returns an error and/or invalid data") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
+                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
                                 publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))))
                                 return publisher.eraseToAnyPublisher()
                             }()
@@ -110,7 +110,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
 
                         waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
-                                .fetchStuff(resource: .babyNamePopularities)
+                                .fetchStuff(resource: .dummyProductsAll)
                                 .sink { completion in
                                     switch completion {
                                     case .finished:
@@ -126,13 +126,13 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                     }
 
                     it("should get persisted posts even if parsing step after network fails") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(babyNamePopularities)
+                                let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
                                 return publisher.eraseToAnyPublisher()
                             }()
                         ))
@@ -146,7 +146,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
 
                         waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
-                                .fetchStuff(resource: .babyNamePopularities)
+                                .fetchStuff(resource: .dummyProductsAll)
                                 .sink { completion in
                                     switch completion {
                                     case .finished:
@@ -155,7 +155,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
+                                    expect(values.0.products.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -163,12 +163,12 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                     }
 
                     it("should get network posts if theres was an error on the persistence layer") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
+                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
                                 publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))))
                                 return publisher.eraseToAnyPublisher()
                             }()
@@ -177,10 +177,10 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                             var data: Data? = nil
                             do {
-                                let jsonData = try JSONEncoder().encode(babyNamePopularities)
+                                let jsonData = try JSONEncoder().encode(dataContainer)
                                 data = jsonData
                             } catch { }
 
@@ -196,7 +196,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
 
                         waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
-                                .fetchStuff(resource: .babyNamePopularities)
+                                .fetchStuff(resource: .dummyProductsAll)
                                 .sink { completion in
                                     switch completion {
                                     case .finished:
@@ -205,7 +205,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                                         fail()
                                     }
                                 } receiveValue: { values in
-                                    expect(values.0.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
+                                    expect(values.0.products.count).to(beGreaterThan(0))
                                     done()
                                 }
                                 .store(in: &cancellables)
@@ -213,13 +213,13 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                     }
 
                     it("should succeed if nothing (empty array) is returned from the persistence layer") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
                         Given(persistence, .fetchResource(
                             .any,
                             willReturn: {
-                                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, PersistenceLayerError>(.init(data: []))
-                                publisher.send(.init(data: []))
+                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
+                                publisher.send(.stub())
                                 return publisher.eraseToAnyPublisher()
                             }()
                         ))
@@ -227,10 +227,10 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                         Given(network, .fetchData( request: .any, willReturn: {
                             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
-                            let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+                            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                             var data: Data? = nil
                             do {
-                                let jsonData = try JSONEncoder().encode(babyNamePopularities)
+                                let jsonData = try JSONEncoder().encode(dataContainer)
                                 data = jsonData
                             } catch { }
 
@@ -246,7 +246,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
 
                         waitUntil(timeout: .seconds(5), action: { (done) in
                             dataProvider
-                                .fetchStuff(resource: .babyNamePopularities)
+                                .fetchStuff(resource: .dummyProductsAll)
                                 .sink { completion in
                                     switch completion {
                                     case .finished:
@@ -261,7 +261,7 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                                     case .local:
                                         fail()
                                     case .remote:
-                                        expect(value.babyNamePopularityRepresentation.count).to(beGreaterThan(0))
+                                        expect(value.products.count).to(beGreaterThan(0))
                                         done()
                                     }
                                 }
@@ -271,5 +271,16 @@ class DataProviderRemoteOnErrorUseLocalTests: QuickSpec {
                 }
             }
         }
+    }
+}
+
+private extension DummyProductDataContainer {
+    static func stub() -> DummyProductDataContainer {
+        .init(
+            total: 0,
+            skip: 0,
+            limit: 0,
+            products: []
+        )
     }
 }
