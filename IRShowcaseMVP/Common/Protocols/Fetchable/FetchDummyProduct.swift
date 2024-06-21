@@ -11,7 +11,13 @@ import Foundation
 import Combine
 
 // sourcery: AutoMockable
-protocol FetchDummyProductsProtocol {
-    func fetchDummyProducts(limit: Int, skip: Int) -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error>
-    func fetchDummyProductsAll() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error>
+protocol FetchDummyProductsCombineProtocol {
+    func fetchDummyProductsPublisher(limit: Int, skip: Int) -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error>
+    func fetchDummyProductsAllPublisher() -> AnyPublisher<(DummyProductDataContainer, DataProviderSource), Error>
+}
+
+// sourcery: AutoMockable
+protocol FetchDummyProductsProtocol: FetchDummyProductsCombineProtocol, Sendable {
+    @Sendable func fetchDummyProducts(limit: Int, skip: Int) async throws -> (DummyProductDataContainer, DataProviderSource)
+    @Sendable func fetchDummyProductsAll() async throws -> (DummyProductDataContainer, DataProviderSource)
 }

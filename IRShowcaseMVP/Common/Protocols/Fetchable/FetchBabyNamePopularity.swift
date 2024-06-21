@@ -7,9 +7,8 @@
 //
 
 import Foundation
-import Combine
 
 // sourcery: AutoMockable
 protocol FetchBabyNamePopularitiesProtocol {
-    func fetchBabyNamePopularities() -> AnyPublisher<BabyNamePopularityDataContainer, Error>
+    func fetchBabyNamePopularities() async throws -> BabyNamePopularityDataContainer
 }

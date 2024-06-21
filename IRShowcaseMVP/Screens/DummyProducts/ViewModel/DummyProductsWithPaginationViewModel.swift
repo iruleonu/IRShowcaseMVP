@@ -18,11 +18,12 @@ final class DummyProductsWithPaginationViewModelImpl: DummyProductsViewModel {
     let paginationSize: Int
 
     var observableObject: DummyProductsViewObservableObject
-    let fetchPaginatedDummyProductList: PaginatorSingle<(DummyProductDataContainer, DataProviderSource)>
+    let fetchPaginatedDummyProductList: PaginatorSinglePublisher<(DummyProductDataContainer, DataProviderSource)>
     let startFetchPublisher: PassthroughSubject<PageFetchType, Never>
     let thresholdToStartFetchingNextPage: Int
     private var cancellables = Set<AnyCancellable>()
 
+    @MainActor
     init(
         routing: DummyProductsScreenRouting,
         localDataProvider: DummyProductsFetchAndSaveDataProvider,
@@ -36,7 +37,7 @@ final class DummyProductsWithPaginationViewModelImpl: DummyProductsViewModel {
 
         self.observableObject = DummyProductsViewObservableObject()
 
-        self.fetchPaginatedDummyProductList = PaginatorSingle(
+        self.fetchPaginatedDummyProductList = PaginatorSinglePublisher(
             useCase: { page in
                 FetchDummyProductsPaginatedUseCaseImpl()
                     .execute(
@@ -56,20 +57,24 @@ final class DummyProductsWithPaginationViewModelImpl: DummyProductsViewModel {
 }
 
 extension DummyProductsWithPaginationViewModelImpl {
+    @MainActor
     func onAppear() {
         startFetchPublisher.send(.initialPage)
     }
 
+    @MainActor
     func onItemAppear(_ item: DummyProduct) {
         fetchNextPageIfItemReachedThreshold(item: item, threshold: -abs(thresholdToStartFetchingNextPage))
     }
 
+    @MainActor
     func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView {
         return routing.makeDummyProductDetailsView(dummyProduct: dummyProduct)
     }
 }
 
 private extension DummyProductsWithPaginationViewModelImpl {
+    @MainActor
     func setupBindings() {
         startFetchPublisher
             .buffer(size: 1, prefetch: .byRequest, whenFull: .dropNewest)
@@ -89,6 +94,7 @@ private extension DummyProductsWithPaginationViewModelImpl {
             .store(in: &cancellables)
     }
 
+    @MainActor
     func fetchNextPageIfItemReachedThreshold(item: DummyProduct, threshold: Int) {
         // (1) No more pages
         if observableObject.pagingState == .noMorePagesToLoad {
@@ -117,8 +123,9 @@ private extension DummyProductsWithPaginationViewModelImpl {
 }
 
 private extension Publisher where Output == PageFetchType, Failure == Never {
+    @MainActor
     func fetchPaginatedValue(
-        paginator: PaginatorSingle<(DummyProductDataContainer, DataProviderSource)>,
+        paginator: PaginatorSinglePublisher<(DummyProductDataContainer, DataProviderSource)>,
         observableObject: DummyProductsViewObservableObject,
         localDataProvider: DummyProductsFetchAndSaveDataProvider
     ) -> AnyCancellable {

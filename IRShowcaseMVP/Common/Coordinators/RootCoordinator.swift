@@ -9,14 +9,15 @@
 import Foundation
 import UIKit
 
+@MainActor
 protocol RootRouting {
     func start()
 }
 
 final class RootCoordinator: RootRouting {
     private enum LaunchFlow {
-        case onBoarding
         case mainScreen
+        case popularBabyNames
     }
     
     private var window: UIWindow
@@ -27,10 +28,12 @@ final class RootCoordinator: RootRouting {
         builders = b
     }
 
+    @MainActor 
     func start() {
-        launchMainScreen()
+        handleLaunchFlow(.mainScreen)
     }
 
+    @MainActor 
     func launchMainScreen() {
         window.rootViewController = builders.makeMainScreen()
         //window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProvider()
@@ -38,16 +41,18 @@ final class RootCoordinator: RootRouting {
         //window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProviderOnAPaginatedModel()
     }
     
-    func launchOnBoarding() {
+    @MainActor 
+    func launchPopularBabyNamesScreen() {
         window.rootViewController = builders.makePopularBabyNamesScreen()
     }
     
+    @MainActor 
     private func handleLaunchFlow(_ launchFlow: LaunchFlow) {
         switch launchFlow {
         case .mainScreen:
             launchMainScreen()
-        case .onBoarding:
-            launchOnBoarding()
+        case .popularBabyNames:
+            launchPopularBabyNamesScreen()
         }
     }
 }

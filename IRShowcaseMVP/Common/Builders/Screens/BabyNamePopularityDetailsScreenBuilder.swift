@@ -14,11 +14,13 @@ enum BabyNamePopularityDetailsScreenAction {
     // Empty
 }
 
-protocol BabyNamePopularityDetailsChildBuilders {
+@MainActor 
+protocol BabyNamePopularityDetailsChildBuilders: Sendable {
     // Empty
 }
 
-struct BabyNamePopularityDetailsScreenBuilder {
+@MainActor
+struct BabyNamePopularityDetailsScreenBuilder { 
     func make(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView {
         let coordinator = BabyNamePopularityDetailsCoordinator(builders: self)
         let presenter = BabyNamePopularityDetailsViewModelImpl(routing: coordinator, babyNamePopularity: babyNamePopularity)

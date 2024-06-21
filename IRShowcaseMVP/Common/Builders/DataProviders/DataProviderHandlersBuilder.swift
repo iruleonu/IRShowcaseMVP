@@ -9,46 +9,50 @@
 import Foundation
 import Combine
 
-struct DataProviderHandlersBuilder<T: Codable> {
+struct DataProviderHandlersBuilder<T: Codable & Sendable> {
     let standardNetworkHandler: DataProviderHandlers<T>.NetworkHandler = { (fetchable, urlRequest) in
-        let network: ((Data, URLResponse)) -> AnyPublisher<Data, DataProviderError> = { tuple in
-            Future { promise in
-                if let cast = tuple.1 as? HTTPURLResponse, cast.statusCode == 400 {
-                    let error = NSError.error(withMessage: "DataProviderHandlers", statusCode: cast.statusCode)
-                    promise(.failure(.requestError(error: error)))
-                    return
-                }
-                promise(.success(tuple.0))
-            }.eraseToAnyPublisher()
+        let values = try await fetchable.fetchData(request: urlRequest)
+
+        // Check for the 400 status code
+        if let cast = values.1 as? HTTPURLResponse, cast.statusCode == 400 {
+            let error = NSError.error(withMessage: "DataProviderHandlers", statusCode: cast.statusCode)
+            throw DataProviderError.requestError(error: error)
         }
-        return fetchable.fetchData(request: urlRequest).flatMap(network).eraseToAnyPublisher()
+
+        return values.0
     }
     let standardNetworkParserHandler: DataProviderHandlers<T>.NetworkParserHandler = { data in
-        Future { promise in
-            do {
-                let results = try JSONDecoder().decode(T.self, from: data)
-                promise(.success(results))
-            } catch {
-                promise(.failure(.parsing(error: error)))
-            }
-        }.eraseToAnyPublisher()
+        do {
+            let results = try JSONDecoder().decode(T.self, from: data)
+            return results
+        } catch {
+            throw DataProviderError.parsing(error: error)
+        }
     }
     let standardPersistenceSaveHandler: DataProviderHandlers<T>.PersistenceSaveHandler = { (persistenceLayer, codables) in
-        Future { promise in
+        try await withCheckedThrowingContinuation { continuation in
             persistenceLayer.persistObjects(codables) { _, error in
                 if let e = error {
-                    promise(.failure(DataProviderError.persistence(error: e)))
-                    return
+                    continuation.resume(throwing: DataProviderError.persistence(error: e))
+                } else {
+                    continuation.resume(returning: codables)
                 }
-                promise(.success(codables))
             }
-        }.eraseToAnyPublisher()
+        }
     }
     let standardPersistenceLoadHandler: DataProviderHandlers<T>.PersistenceLoadHandler = { (persistenceLayer, resource) in
-        return persistenceLayer.fetchResource(resource).mapError({ DataProviderError.persistence(error: $0) }).eraseToAnyPublisher()
+        do {
+            return try await persistenceLayer.fetchResource(resource)
+        } catch {
+            throw DataProviderError.persistence(error: error)
+        }
     }
     let standardPersistenceRemoveHandler: DataProviderHandlers.PersistenceRemoveHandler = { (persistenceLayer, resource) in
-        return persistenceLayer.removeResource(resource).mapError({ DataProviderError.persistence(error: $0) }).eraseToAnyPublisher()
+        do {
+            return try await persistenceLayer.removeResource(resource)
+        } catch {
+            throw DataProviderError.persistence(error: error)
+        }
     }
 
     // Disable force_cast because this we need to use it to help the compiler with the associatedType
@@ -65,14 +69,14 @@ struct DataProviderHandlersBuilder<T: Codable> {
             persistenceLoadHandler = standardPersistenceLoadHandler as! DataProviderHandlers<TP>.PersistenceLoadHandler
             persistenceRemoveHandler = standardPersistenceRemoveHandler
         } else {
-            persistenceSaveHandler = { _, _ in
-                Future { promise in promise(.failure(DataProviderError.persistence(error: PersistenceLayerError.disabled))) }.eraseToAnyPublisher()
+            persistenceSaveHandler = { @Sendable _, _ in
+                throw PersistenceLayerError.disabled
             }
-            persistenceLoadHandler = { _, _ in
-                Future { promise in promise(.failure(DataProviderError.persistence(error: PersistenceLayerError.disabled))) }.eraseToAnyPublisher()
+            persistenceLoadHandler = { @Sendable _, _ in
+                throw PersistenceLayerError.disabled
             }
-            persistenceRemoveHandler = { _, _ in
-                Future { promise in promise(.failure(DataProviderError.persistence(error: PersistenceLayerError.disabled))) }.eraseToAnyPublisher()
+            persistenceRemoveHandler = { @Sendable _, _ in
+                throw PersistenceLayerError.disabled
             }
         }
 
@@ -80,8 +84,12 @@ struct DataProviderHandlersBuilder<T: Codable> {
             networkHandler = standardNetworkHandler
             networkParserHandler = standardNetworkParserHandler as! DataProviderHandlers<TP>.NetworkParserHandler
         } else {
-            networkHandler = { _, _ in Future { promise in promise(.failure(DataProviderError.networkingDisabled)) }.eraseToAnyPublisher() }
-            networkParserHandler = { _ in Future { promise in promise(.failure(DataProviderError.networkingDisabled)) }.eraseToAnyPublisher() }
+            networkHandler = { @Sendable _, _ in
+                throw DataProviderError.networkingDisabled
+            }
+            networkParserHandler = { @Sendable _ in
+                throw DataProviderError.networkingDisabled
+            }
         }
 
         return DataProviderHandlers(networkHandler: networkHandler,

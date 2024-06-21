@@ -12,31 +12,37 @@ import Combine
 typealias PersistenceSaveCompletion = (Bool, Error?) -> Void
 
 // sourcery: AutoMockable
-protocol PersistenceLayerLoad {
-    func fetchResource<T>(_ resource: Resource) -> AnyPublisher<T, PersistenceLayerError>
+protocol PersistenceLayerLoadCombineProtocol {
+    func fetchResourcePublisher<T>(_ resource: Resource) -> AnyPublisher<T, PersistenceLayerError>
+}
+// sourcery: AutoMockable
+protocol PersistenceLayerLoad: PersistenceLayerLoadCombineProtocol, Sendable {
+    func fetchResource<T>(_ resource: Resource) async throws -> T
 }
 
 // sourcery: AutoMockable
-protocol PersistenceLayerSave {
+protocol PersistenceLayerSave: Sendable {
     func persistObjects<T>(_ objects: T, saveCompletion: @escaping PersistenceSaveCompletion)
 }
 
 // sourcery: AutoMockable
-protocol PersistenceLayerRemove {
-    func removeResource(_ resource: Resource) -> AnyPublisher<Bool, PersistenceLayerError>
+protocol PersistenceLayerRemoveCombineProtocol: Sendable {
+    func removeResourcePublisher(_ resource: Resource) -> AnyPublisher<Bool, PersistenceLayerError>
+}
+// sourcery: AutoMockable
+protocol PersistenceLayerRemove: PersistenceLayerRemoveCombineProtocol, Sendable {
+    func removeResource(_ resource: Resource) async throws -> Bool
 }
 
 //sourcery: AutoMockable
-protocol PersistenceLayer: PersistenceLayerLoad, PersistenceLayerSave, PersistenceLayerRemove {
+protocol PersistenceLayer: PersistenceLayerLoad, PersistenceLayerSave, PersistenceLayerRemove {}
 
-}
-
-class PersistenceLayerImpl {
+final class PersistenceLayerImpl {
     init() {}
 }
 
 extension PersistenceLayerImpl: PersistenceLayerLoad {
-    func fetchResource<T>(_ resource: Resource) -> AnyPublisher<T, PersistenceLayerError> {
+    func fetchResourcePublisher<T>(_ resource: Resource) -> AnyPublisher<T, PersistenceLayerError> {
         switch resource {
         case .dummyProducts:
             fallthrough
@@ -54,6 +60,22 @@ extension PersistenceLayerImpl: PersistenceLayerLoad {
             return Future { promise in
                 promise(.failure(PersistenceLayerError.notImplemented))
             }.eraseToAnyPublisher()
+        }
+    }
+    
+    func fetchResource<T>(_ resource: Resource) async throws -> T {
+        switch resource {
+        case .dummyProducts:
+            fallthrough
+        case .dummyProductsAll:
+            let fileName = PersistenceLayerImpl.fileNameForResource(resource)
+            let savedFile: DummyProductDataContainer? = FileManager.object(from: fileName)
+            guard let casted = savedFile as? T else {
+                throw PersistenceLayerError.casting
+            }
+            return casted
+        default:
+            throw PersistenceLayerError.notImplemented
         }
     }
 }
@@ -96,10 +118,14 @@ extension PersistenceLayerImpl: PersistenceLayerSave {
 }
 
 extension PersistenceLayerImpl: PersistenceLayerRemove {
-    func removeResource(_ resource: Resource) -> AnyPublisher<Bool, PersistenceLayerError> {
+    func removeResourcePublisher(_ resource: Resource) -> AnyPublisher<Bool, PersistenceLayerError> {
         return Future { promise in
             promise(.failure(PersistenceLayerError.notImplemented))
         }.eraseToAnyPublisher()
+    }
+    
+    func removeResource(_ resource: Resource) async throws -> Bool {
+        throw PersistenceLayerError.notImplemented
     }
 }
 

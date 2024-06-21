@@ -14,7 +14,7 @@ enum PageFetchType {
     case nextPage
 }
 
-final class PaginatorSingle<Result> {
+final class PaginatorSinglePublisher<Result> {
     private var page: Int
     private var result: Result?
     private let useCase: (_ page: Int) -> AnyPublisher<(data: Result, isLastPage: Bool), Error>
@@ -48,7 +48,7 @@ final class PaginatorSingle<Result> {
     }
 }
 
-final class Paginator<Result> {
+final class PaginatorPublisher<Result> {
     private var page: Int
     private var allResults: [Result] = []
     private let useCase: ( (_ page: Int) -> AnyPublisher<(data: [Result], isLastPage: Bool), Error>)
@@ -80,5 +80,60 @@ final class Paginator<Result> {
                 self?.page = newPage
             })
             .eraseToAnyPublisher()
+    }
+}
+
+final class PaginatorSingle<Result> {
+    private var page: Int
+    private var result: Result?
+    private let useCase: (_ page: Int) async throws -> (data: Result, isLastPage: Bool)
+
+    init(useCase: @escaping @Sendable ((_ page: Int) async throws -> (data: Result, isLastPage: Bool))) {
+        page = 0
+        self.useCase = useCase
+    }
+
+    func resetPaginationAndFetchInitialPage() async throws -> (data: Result, isLastPage: Bool) {
+        let initialPage = 0
+        let callUseCase = try await useCase(initialPage)
+        self.page = initialPage
+        self.result = callUseCase.data
+        return callUseCase
+    }
+
+    func fetchFollowingPage() async throws -> (data: Result, isLastPage: Bool) {
+        let newPage = page + 1
+        let callUseCase = try await useCase(newPage)
+        self.result = callUseCase.data
+        self.page = newPage
+        return (data: callUseCase.data, isLastPage: callUseCase.isLastPage)
+    }
+}
+
+final class Paginator<Result> {
+    private var page: Int
+    private var allResults: [Result] = []
+    private let useCase: (_ page: Int) async throws -> (data: [Result], isLastPage: Bool)
+
+    init(useCase: @escaping (_ page: Int) async throws -> (data: [Result], isLastPage: Bool)) {
+        page = 0
+        self.useCase = useCase
+    }
+
+    func resetPagination() async throws -> (data: [Result], isLastPage: Bool) {
+        let initialPage = 0
+        let callUseCase = try await useCase(initialPage)
+        self.page = initialPage
+        self.allResults = callUseCase.data
+        return callUseCase
+    }
+
+    func fetchFollowingPage() async throws -> (data: [Result], isLastPage: Bool) {
+        let newPage = page + 1
+        let callUseCase = try await useCase(newPage)
+        let newResults = allResults + callUseCase.data
+        allResults = newResults
+        page = newPage
+        return (data: newResults, isLastPage: callUseCase.isLastPage)
     }
 }

@@ -14,10 +14,12 @@ enum RandomNameSelectorScreenAction {
     // Empty
 }
 
-protocol RandomNameSelectorScreenChildBuilders {
+@MainActor
+protocol RandomNameSelectorScreenChildBuilders: Sendable {
     func makeBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView
 }
 
+@MainActor
 struct RandomNameSelectorScreenBuilder {
     func make(dataProvider: FetchBabyNamePopularitiesProtocol) -> RandomNameSelectorView {
         let coordinator = RandomNameSelectorScreenCoordinator(builders: self, dataProvider: dataProvider)

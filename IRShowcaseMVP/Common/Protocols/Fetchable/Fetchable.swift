@@ -13,9 +13,7 @@ protocol Fetchable {
     associatedtype I
     associatedtype V
     associatedtype E: Error
-    func fetchData(_ input: I) -> AnyPublisher<V, E>
-}
-
-protocol URLRequestFetchable {
-    func fetchData(request: URLRequest) -> AnyPublisher<(Data, URLResponse), DataProviderError>
+    func fetchDataPublisher(_ input: I) -> AnyPublisher<V, E>
+    func fetchDataSingle(_ input: I) async throws -> V
+    func fetchData(_ input: I) async throws -> [V]
 }

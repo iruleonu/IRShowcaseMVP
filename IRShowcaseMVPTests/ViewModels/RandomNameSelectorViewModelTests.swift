@@ -23,6 +23,7 @@ final class RandomNameSelectorViewModelTests: TestCase {
         cancellables = Set<AnyCancellable>()
     }
 
+    @MainActor
     func testDataGetsSetOnTheHappyPath() {
         let expectation = self.expectation(description: "Expected to get data on success response")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -38,8 +39,7 @@ final class RandomNameSelectorViewModelTests: TestCase {
             dataProviderMock,
             .fetchBabyNamePopularities(willProduce: { stubber in
                 let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, Error>(babyNamePopularities)
-                stubber.return(publisher.eraseToAnyPublisher())
+                stubber.return(babyNamePopularities)
             })
         )
 
@@ -56,6 +56,7 @@ final class RandomNameSelectorViewModelTests: TestCase {
             .store(in: &cancellables)
     }
 
+    @MainActor
     func testShowErrorViewBooleanIsTrueOnError() {
         let expectation = self.expectation(description: "Expected to the showErrorView boolean to be true on fetch error")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -69,11 +70,7 @@ final class RandomNameSelectorViewModelTests: TestCase {
 
         Given(
             dataProviderMock,
-            .fetchBabyNamePopularities(willProduce: { stubber in
-                let passthroughSubject = PassthroughSubject<BabyNamePopularityDataContainer, Error>()
-                stubber.return(passthroughSubject.eraseToAnyPublisher())
-                passthroughSubject.send(completion: .failure(DataProviderError.noConnectivity))
-            })
+            .fetchBabyNamePopularities(willThrow: DataProviderError.noConnectivity)
         )
 
         XCTAssert(subject.observableObject.showErrorView == false)
@@ -83,6 +80,7 @@ final class RandomNameSelectorViewModelTests: TestCase {
         subject
             .observableObject
             .$showErrorView
+            .dropFirst()
             .sink { showErrorView in
                 XCTAssertTrue(showErrorView)
                 expectation.fulfill()
@@ -90,6 +88,7 @@ final class RandomNameSelectorViewModelTests: TestCase {
             .store(in: &cancellables)
     }
 
+    @MainActor
     func testButtonTapsSelectsCorrectGender() {
         let expectation = self.expectation(description: "Expected the selected baby name to have the last button tapped gender")
         defer { self.waitForExpectations(timeout: 10.0, handler: nil) }
@@ -105,8 +104,7 @@ final class RandomNameSelectorViewModelTests: TestCase {
             dataProviderMock,
             .fetchBabyNamePopularities(willProduce: { stubber in
                 let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                let publisher = CurrentValueSubject<BabyNamePopularityDataContainer, Error>(babyNamePopularities)
-                stubber.return(publisher.eraseToAnyPublisher())
+                stubber.return(babyNamePopularities)
             })
         )
 

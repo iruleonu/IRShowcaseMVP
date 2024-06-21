@@ -15,6 +15,7 @@ import OrderedCollections
 @testable import IRShowcaseMVP
 
 final class RandomNameSelectorViewTests: TestCase {
+    @MainActor
     func testSnapshotRandomNameSelectorView_NoSelection() {
         // Given
         let view = RandomNameSelectorView(
@@ -27,6 +28,7 @@ final class RandomNameSelectorViewTests: TestCase {
         cwSnapshotOnDevices(view: view)
     }
 
+    @MainActor
     func testSnapshotRandomNameSelectorView_FirstSelected() {
         // Given
         let view = RandomNameSelectorView(
@@ -39,6 +41,7 @@ final class RandomNameSelectorViewTests: TestCase {
         cwSnapshotOnDevices(view: view)
     }
 
+    @MainActor
     func testSnapshotRandomNameSelectorView_ErrorView() {
         // Given
         let view = RandomNameSelectorView(
@@ -54,6 +57,7 @@ final class RandomNameSelectorViewTests: TestCase {
 
 // MARK: - Private methods
 private extension RandomNameSelectorViewTests {
+    @MainActor
     func makePresenter(observableObject: RandomNameSelectorViewObservableObject) -> RandomNameSelectorViewModelMock {
         let presenterMock = RandomNameSelectorViewModelMock()
 

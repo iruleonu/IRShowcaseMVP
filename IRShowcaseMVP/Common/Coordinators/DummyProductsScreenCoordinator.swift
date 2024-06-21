@@ -10,7 +10,8 @@ import Foundation
 import UIKit
 
 // sourcery: AutoMockable
-protocol DummyProductsScreenRouting {
+@MainActor
+protocol DummyProductsScreenRouting: Sendable {
     func makeDummyProductDetailsView(dummyProduct: DummyProduct) -> DummyProductDetailsView
 }
 

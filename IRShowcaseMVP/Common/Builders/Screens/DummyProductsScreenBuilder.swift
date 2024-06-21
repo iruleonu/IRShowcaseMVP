@@ -14,10 +14,12 @@ enum DummyProductsScreenAction {
     // Empty
 }
 
-protocol DummyProductsScreenChildBuilders {
+@MainActor
+protocol DummyProductsScreenChildBuilders: Sendable {
     func makeDummyProductDetailsView(dummyProduct: DummyProduct) -> DummyProductDetailsView
 }
 
+@MainActor
 struct DummyProductsScreenBuilder {
     func make(
         localDataProvider: DummyProductsFetchAndSaveDataProvider,

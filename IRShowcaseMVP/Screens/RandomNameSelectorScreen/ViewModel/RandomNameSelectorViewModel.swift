@@ -20,11 +20,11 @@ final class RandomNameSelectorViewObservableObject: ObservableObject {
 // sourcery: AutoMockable
 protocol RandomNameSelectorViewModel {
     var observableObject: RandomNameSelectorViewObservableObject { get }
-    func onAppear()
-    func onFemaleButtonTap()
-    func onRandomButtonTap()
-    func onMaleButtonTap()
-    func navigateToBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView
+    @MainActor func onAppear()
+    @MainActor func onFemaleButtonTap()
+    @MainActor func onRandomButtonTap()
+    @MainActor func onMaleButtonTap()
+    @MainActor func navigateToBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView
 }
 
 final class RandomNameSelectorViewModelImpl: RandomNameSelectorViewModel {
@@ -35,43 +35,34 @@ final class RandomNameSelectorViewModelImpl: RandomNameSelectorViewModel {
 
     private var cancellables = Set<AnyCancellable>()
 
+    @MainActor
     init(routing: RandomNameSelectorScreenRouting, dataProvider: FetchBabyNamePopularitiesProtocol) {
         self.routing = routing
         self.dataProvider = dataProvider
         self.observableObject = RandomNameSelectorViewObservableObject()
         currentGender = Gender.unknown
     }
-
-    func onAppear() {
-        fetchPopularBabyNames()
-    }
-
-    private func fetchPopularBabyNames() {
-        dataProvider.fetchBabyNamePopularities()
-            .catch({ [weak self] error -> Empty<BabyNamePopularityDataContainer, Never> in
-                guard let self = self else { return Empty<BabyNamePopularityDataContainer, Never>() }
-                self.observableObject.showErrorView = true
-                return Empty<BabyNamePopularityDataContainer, Never>()
-            })
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] babyNamePopularitiesDataContainer in
-                guard let self = self else { return }
-                let noDuplicates = Set(self.observableObject.babyNamePopularities).union(Set(babyNamePopularitiesDataContainer.babyNamePopularityRepresentation))
-                self.observableObject.babyNamePopularities = Array(noDuplicates)
-            }
-            .store(in: &cancellables)
-    }
 }
 
 extension RandomNameSelectorViewModelImpl {
-    func navigateToBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView {
-        return self.routing.buildBabyNamePopularityDetails(babyNamePopularity: babyNamePopularity)
+    @MainActor
+    func onAppear() {
+        Task { @MainActor in
+            await fetchPopularBabyNames()
+        }
     }
 
+    @MainActor
+    func navigateToBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView {
+        return self.routing.makeBabyNamePopularityDetails(babyNamePopularity: babyNamePopularity)
+    }
+
+    @MainActor
     func onFemaleButtonTap() {
         currentGender = .female
     }
 
+    @MainActor
     func onRandomButtonTap() {
         guard currentGender != .unknown,
             let babyNamePopularity = selectOneRandomName(fromBabyNames: self.observableObject.babyNamePopularities, gender: currentGender)
@@ -81,12 +72,32 @@ extension RandomNameSelectorViewModelImpl {
         self.observableObject.selectedBabyNamePopularity = babyNamePopularity
     }
 
+    @MainActor
     func onMaleButtonTap() {
         currentGender = .male
     }
 }
 
 private extension RandomNameSelectorViewModelImpl {
+    @MainActor
+    private func fetchPopularBabyNames() async {
+        let fetchResult: Result<BabyNamePopularityDataContainer, Error>
+        do {
+            let value = try await dataProvider.fetchBabyNamePopularities()
+            fetchResult = .success(value)
+        } catch {
+            fetchResult = .failure(error)
+        }
+
+        switch fetchResult {
+        case .success(let babyNamePopularitiesDataContainer):
+            let noDuplicates = Set(self.observableObject.babyNamePopularities).union(Set(babyNamePopularitiesDataContainer.babyNamePopularityRepresentation))
+            self.observableObject.babyNamePopularities = Array(noDuplicates)
+        case .failure:
+            self.observableObject.showErrorView = true
+        }
+    }
+
     private func selectOneRandomFemale(fromBabyNames babyNames: [BabyNamePopularity]) -> BabyNamePopularity? {
         return selectOneRandomName(fromBabyNames: babyNames, gender: .female)
     }

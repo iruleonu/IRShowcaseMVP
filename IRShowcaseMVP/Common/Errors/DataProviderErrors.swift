@@ -12,19 +12,21 @@ enum DataProviderError: Error {
     case unknown
     case invalidType
     case requestError(error: Error)
-    case requestError(httpStatusCode: Int, error: Error?)
+    case requestHttpStatusError(httpStatusCode: Int, error: Error?)
+    case invalidHttpUrlResponse
     case noConnectivity
     case persistence(error: Error)
     case parsing(error: Error)
     case fetch(error: Error)
     case casting
     case networkingDisabled
+    case noDataFromFetch
 
     var errorDescription: String {
         switch self {
         case .parsing:
             return "Parsing"
-        case .requestError:
+        case .requestHttpStatusError:
             return "Request error"
         case .noConnectivity:
             return "No network"

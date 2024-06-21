@@ -98,3 +98,5 @@ extension Resource: Equatable {
         return samePath && sameParams
     }
 }
+
+extension Resource: Sendable {}

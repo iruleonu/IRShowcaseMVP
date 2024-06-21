@@ -23,6 +23,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
         cancellables = Set<AnyCancellable>()
     }
 
+    @MainActor
     func testShouldFetchRemoteDataIfDataIsntAvailableLocally() {
         let expectation = self.expectation(description: "Expected to ShouldFetchRemoteDataIfDataIsntAvailableLocally")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -41,7 +42,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
             paginationSize: 10
         )
 
-        Given(persistenceMock, .fetchResource(.any, willReturn: {
+        Given(persistenceMock, .fetchResourcePublisher(.any, willReturn: {
             let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
             publisher.send(completion: .failure(PersistenceLayerError.emptyResult(error: DataProviderError.casting)))
             return publisher.eraseToAnyPublisher()
@@ -49,7 +50,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
         ))
 
         Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-        Given(networkMock, .fetchData( request: .any, willReturn: {
+        Given(networkMock, .fetchDataPublisher(request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
             let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
@@ -85,8 +86,8 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
             .sink { array in
                 XCTAssert(array.count > 0)
 
-                persistenceMock.verify(.fetchResource(.any), count: .exactly(1))
-                networkMock.verify(.fetchData(request: .any), count: .exactly(1))
+                persistenceMock.verify(.fetchResourcePublisher(.any), count: .exactly(1))
+                networkMock.verify(.fetchDataPublisher(request: .any), count: .exactly(1))
                 persistenceMock.verify(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any), count: .exactly(1))
 
                 expectation.fulfill()
@@ -96,6 +97,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
         subject.onAppear()
     }
 
+    @MainActor
     func testShouldntFetchRemotelyIfDataIsAvailableLocally() {
         let expectation = self.expectation(description: "Expected to ShouldntFetchRemotelyIfDataIsAvailableLocally")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -114,7 +116,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
             paginationSize: 10
         )
 
-        Given(persistenceMock, .fetchResource(.any, willReturn: {
+        Given(persistenceMock, .fetchResourcePublisher(.any, willReturn: {
             let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
             let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
             return publisher.eraseToAnyPublisher()
@@ -122,7 +124,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
         ))
 
         Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-        Given(networkMock, .fetchData( request: .any, willReturn: {
+        Given(networkMock, .fetchDataPublisher( request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
             publisher.send(completion: .failure(DataProviderError.noConnectivity))
             return publisher.eraseToAnyPublisher()
@@ -144,8 +146,8 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
             .sink { array in
                 XCTAssert(array.count > 0)
 
-                persistenceMock.verify(.fetchResource(.any), count: .exactly(1))
-                networkMock.verify(.fetchData(request: .any), count: .exactly(0))
+                persistenceMock.verify(.fetchResourcePublisher(.any), count: .exactly(1))
+                networkMock.verify(.fetchDataPublisher(request: .any), count: .exactly(0))
                 persistenceMock.verify(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any), count: .exactly(0))
 
                 expectation.fulfill()
@@ -155,6 +157,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
         subject.onAppear()
     }
 
+    @MainActor
     func testShowErrorIfItCouldntFetchLocallyOrRemote() {
         let expectation = self.expectation(description: "Expected to ShowErrorIfItCouldntFetchLocallyOrRemote")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -173,7 +176,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
             paginationSize: 10
         )
 
-        Given(persistenceMock, .fetchResource(.any, willReturn: {
+        Given(persistenceMock, .fetchResourcePublisher(.any, willReturn: {
             let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
             publisher.send(completion: .failure(PersistenceLayerError.emptyResult(error: DataProviderError.casting)))
             return publisher.eraseToAnyPublisher()
@@ -181,7 +184,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
         ))
 
         Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-        Given(networkMock, .fetchData( request: .any, willReturn: {
+        Given(networkMock, .fetchDataPublisher( request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
             publisher.send(completion: .failure(DataProviderError.noConnectivity))
             return publisher.eraseToAnyPublisher()
@@ -201,6 +204,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
         subject.onAppear()
     }
 
+    @MainActor
     func testShouldntFetchNextPageWhenWeHaveTheWholeList() {
         let expectation = self.expectation(description: "Expected to shouldntFetchNextPageWhenWeHaveTheWholeList")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -221,14 +225,14 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
 
         let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
 
-        Given(persistenceMock, .fetchResource(.any, willReturn: {
+        Given(persistenceMock, .fetchResourcePublisher(.any, willReturn: {
             let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
             return publisher.eraseToAnyPublisher()
         }()
         ))
 
         Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-        Given(networkMock, .fetchData( request: .any, willReturn: {
+        Given(networkMock, .fetchDataPublisher(request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
             publisher.send(completion: .failure(DataProviderError.noConnectivity))
             return publisher.eraseToAnyPublisher()
@@ -267,8 +271,8 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
 
         Publishers.Zip(onAppearPublisher, onItemAppearPublisher)
             .sink { value in
-                persistenceMock.verify(.fetchResource(.any), count: .exactly(1))
-                networkMock.verify(.fetchData(request: .any), count: .exactly(0))
+                persistenceMock.verify(.fetchResourcePublisher(.any), count: .exactly(1))
+                networkMock.verify(.fetchDataPublisher(request: .any), count: .exactly(0))
                 XCTAssertTrue(self.subject.observableObject.pagingState == .noMorePagesToLoad)
                 expectation.fulfill()
             }
@@ -277,6 +281,7 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
         subject.onAppear()
     }
 
+    @MainActor
     func testShouldFetchNextPageWhenItemIsCloseToTheThreshold() {
         let expectation = self.expectation(description: "Expected to shouldFetchNextPageWhenItemIsCloseToTheThreshold")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -303,14 +308,14 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
             products: dataContainerFromLocalJson.products
         )
 
-        Given(persistenceMock, .fetchResource(.any, willReturn: {
+        Given(persistenceMock, .fetchResourcePublisher(.any, willReturn: {
             let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
             return publisher.eraseToAnyPublisher()
         }()
         ))
 
         Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.babyNamePopularities.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-        Given(networkMock, .fetchData( request: .any, willReturn: {
+        Given(networkMock, .fetchDataPublisher(request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
             publisher.send(completion: .failure(DataProviderError.noConnectivity))
             return publisher.eraseToAnyPublisher()
@@ -351,8 +356,8 @@ final class DummyProductsWithPaginationAndHybridDataProviderViewModelTests: Test
 
         Publishers.Zip(onAppearPublisher, onItemAppearPublisher)
             .sink { value in
-                persistenceMock.verify(.fetchResource(.any), count: .exactly(2))
-                networkMock.verify(.fetchData(request: .any), count: .exactly(0))
+                persistenceMock.verify(.fetchResourcePublisher(.any), count: .exactly(2))
+                networkMock.verify(.fetchDataPublisher(request: .any), count: .exactly(0))
                 XCTAssertTrue(self.subject.observableObject.pagingState == .loadingNextPage || self.subject.observableObject.pagingState == .loaded)
                 expectation.fulfill()
             }

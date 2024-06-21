@@ -23,6 +23,7 @@ final class DummyProductsListViewModelTests: TestCase {
         cancellables = Set<AnyCancellable>()
     }
 
+    @MainActor
     func testShouldFetchRemoteDataIfDataIsntAvailableLocally() {
         let expectation = self.expectation(description: "Expected to testShouldFetchRemoteDataIfDataIsntAvailableLocally")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -38,16 +39,33 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProductsAll(willProduce: { stubber in
+            .fetchDummyProductsAllPublisher(willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .local))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
             })
         )
+        Given(
+            localDataProviderMock,
+            .fetchDummyProductsAll(
+                willProduce: { stubber in
+                    stubber.throw(DataProviderError.invalidType)
+                }
+            )
+        )
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProductsAll(willProduce: { stubber in
+            .fetchDummyProductsAll(
+                willProduce: { stubber in
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    stubber.return((dataContainer, .remote))
+                }
+            )
+        )
+        Given(
+            remoteDataProviderMock,
+            .fetchDummyProductsAllPublisher(willProduce: { stubber in
                 let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((dataContainer, .remote))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -71,6 +89,7 @@ final class DummyProductsListViewModelTests: TestCase {
             .store(in: &cancellables)
     }
 
+    @MainActor
     func testShouldntFetchRemotelyIfDataIsAvailableLocally() {
         let expectation = self.expectation(description: "Expected to testShouldntFetchRemotelyIfDataIsAvailableLocally")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -86,7 +105,16 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProductsAll(willProduce: { stubber in
+            .fetchDummyProductsAll(
+                willProduce: { stubber in
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    stubber.return((dataContainer, .local))
+                }
+            )
+        )
+        Given(
+            localDataProviderMock,
+            .fetchDummyProductsAllPublisher(willProduce: { stubber in
                 let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((dataContainer, .local))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -95,7 +123,15 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProductsAll(willProduce: { stubber in
+            .fetchDummyProductsAll(
+                willProduce: { stubber in
+                    stubber.return((.stub(), .remote))
+                }
+            )
+        )
+        Given(
+            remoteDataProviderMock,
+            .fetchDummyProductsAllPublisher(willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .remote))
                 stubber.return(publisher.eraseToAnyPublisher())
             })
@@ -118,6 +154,7 @@ final class DummyProductsListViewModelTests: TestCase {
             .store(in: &cancellables)
     }
 
+    @MainActor
     func testShowErrorIfItCouldntFetchLocallyOrRemote() {
         let expectation = self.expectation(description: "Expected to showErrorIfItCouldntFetchLocallyOrRemote")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -133,7 +170,15 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProductsAll(willProduce: { stubber in
+            .fetchDummyProductsAll(
+                willProduce: { stubber in
+                    stubber.throw(DataProviderError.invalidType)
+                }
+            )
+        )
+        Given(
+            localDataProviderMock,
+            .fetchDummyProductsAllPublisher(willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .local))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -142,7 +187,15 @@ final class DummyProductsListViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProductsAll(willProduce: { stubber in
+            .fetchDummyProductsAll(
+                willProduce: { stubber in
+                    stubber.throw(DataProviderError.invalidType)
+                }
+            )
+        )
+        Given(
+            remoteDataProviderMock,
+            .fetchDummyProductsAllPublisher(willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .remote))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())

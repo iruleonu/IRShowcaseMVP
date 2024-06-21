@@ -11,6 +11,7 @@ import UIKit
 import SwiftUI
 import Combine
 
+@MainActor 
 protocol RootCoordinatorChildBuilders {
     // Shows a dummy product list screen with a viewModel that firstly fetchs all the products and then sends them to the view
     func makeMainScreen() -> UIViewController

@@ -23,6 +23,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
         cancellables = Set<AnyCancellable>()
     }
 
+    @MainActor
     func testShouldFetchRemoteDataIfDataIsntAvailableLocally() {
         let expectation = self.expectation(description: "Expected to testShouldFetchRemoteDataIfDataIsntAvailableLocally")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -39,7 +40,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProducts(limit: .any, skip: .any, willProduce: { stubber in
+            .fetchDummyProductsPublisher(limit: .any, skip: .any, willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .local))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -48,7 +49,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProducts(limit: .any, skip: .any, willProduce: { stubber in
+            .fetchDummyProductsPublisher(limit: .any, skip: .any, willProduce: { stubber in
                 let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((dataContainer, .remote))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -65,7 +66,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
                 XCTAssert(array.count > 0)
 
                 remoteDataProviderMock.verify(.fetchDummyProductsAll(), count: .exactly(0))
-                remoteDataProviderMock.verify(.fetchDummyProducts(limit: .any, skip: .any), count: .moreOrEqual(to: 1))
+                remoteDataProviderMock.verify(.fetchDummyProductsPublisher(limit: .any, skip: .any), count: .moreOrEqual(to: 1))
                 localDataProviderMock.verify(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any), count: .exactly(1))
 
                 expectation.fulfill()
@@ -73,6 +74,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
             .store(in: &cancellables)
     }
 
+    @MainActor
     func testShouldntFetchRemotelyIfDataIsAvailableLocally() {
         let expectation = self.expectation(description: "Expected to testShouldntFetchRemotelyIfDataIsAvailableLocally")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -89,7 +91,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProducts(limit: .any, skip: .any, willProduce: { stubber in
+            .fetchDummyProductsPublisher(limit: .any, skip: .any, willProduce: { stubber in
                 let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((dataContainer, .local))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -98,7 +100,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProductsAll(willProduce: { stubber in
+            .fetchDummyProductsAllPublisher(willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .remote))
                 stubber.return(publisher.eraseToAnyPublisher())
             })
@@ -121,6 +123,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
             .store(in: &cancellables)
     }
 
+    @MainActor
     func testShowErrorIfItCouldntFetchLocallyOrRemote() {
         let expectation = self.expectation(description: "Expected to showErrorIfItCouldntFetchLocallyOrRemote")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -137,7 +140,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProducts(limit: .any, skip: .any, willProduce: { stubber in
+            .fetchDummyProductsPublisher(limit: .any, skip: .any, willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .local))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -146,7 +149,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProducts(limit: .any, skip: .any, willProduce: { stubber in
+            .fetchDummyProductsPublisher(limit: .any, skip: .any, willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .remote))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -167,6 +170,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
             .store(in: &cancellables)
     }
 
+    @MainActor
     func testShouldntFetchNextPageWhenWeHaveTheWholeList() {
         let expectation = self.expectation(description: "Expected to shouldntFetchNextPageWhenWeHaveTheWholeList")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -185,7 +189,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProducts(limit: .any, skip: .any, willProduce: { stubber in
+            .fetchDummyProductsPublisher(limit: .any, skip: .any, willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((dataContainer, .local))
                 stubber.return(publisher.eraseToAnyPublisher())
             })
@@ -193,7 +197,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProducts(limit: .any, skip: .any, willProduce: { stubber in
+            .fetchDummyProductsPublisher(limit: .any, skip: .any, willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .remote))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -232,8 +236,8 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Publishers.Zip(onAppearPublisher, onItemAppearPublisher)
             .sink { value in
-                localDataProviderMock.verify(.fetchDummyProducts(limit: .any, skip: .any), count: .exactly(1))
-                remoteDataProviderMock.verify(.fetchDummyProducts(limit: .any, skip: .any), count: .exactly(0))
+                localDataProviderMock.verify(.fetchDummyProductsPublisher(limit: .any, skip: .any), count: .exactly(1))
+                remoteDataProviderMock.verify(.fetchDummyProductsPublisher(limit: .any, skip: .any), count: .exactly(0))
                 XCTAssertTrue(self.subject.observableObject.pagingState == .noMorePagesToLoad)
                 expectation.fulfill()
             }
@@ -242,6 +246,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
         subject.onAppear()
     }
 
+    @MainActor
     func testShouldFetchNextPageWhenItemIsCloseToTheThreshold() {
         let expectation = self.expectation(description: "Expected to shouldFetchNextPageWhenItemIsCloseToTheThreshold")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -266,7 +271,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             localDataProviderMock,
-            .fetchDummyProducts(limit: .any, skip: .any, willProduce: { stubber in
+            .fetchDummyProductsPublisher(limit: .any, skip: .any, willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((dataContainer, .local))
                 stubber.return(publisher.eraseToAnyPublisher())
             })
@@ -274,7 +279,7 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Given(
             remoteDataProviderMock,
-            .fetchDummyProducts(limit: .any, skip: .any, willProduce: { stubber in
+            .fetchDummyProductsPublisher(limit: .any, skip: .any, willProduce: { stubber in
                 let publisher = CurrentValueSubject<(DummyProductDataContainer, DataProviderSource), Error>((.stub(), .remote))
                 publisher.send(completion: .failure(DataProviderError.invalidType))
                 stubber.return(publisher.eraseToAnyPublisher())
@@ -315,8 +320,8 @@ final class DummyProductsWithPaginationViewModelTests: TestCase {
 
         Publishers.Zip(onAppearPublisher, onItemAppearPublisher)
             .sink { value in
-                localDataProviderMock.verify(.fetchDummyProducts(limit: .any, skip: .any), count: .exactly(2))
-                remoteDataProviderMock.verify(.fetchDummyProducts(limit: .any, skip: .any), count: .exactly(0))
+                localDataProviderMock.verify(.fetchDummyProductsPublisher(limit: .any, skip: .any), count: .exactly(2))
+                remoteDataProviderMock.verify(.fetchDummyProductsPublisher(limit: .any, skip: .any), count: .exactly(0))
                 XCTAssertTrue(self.subject.observableObject.pagingState == .loadingNextPage || self.subject.observableObject.pagingState == .loaded)
                 expectation.fulfill()
             }

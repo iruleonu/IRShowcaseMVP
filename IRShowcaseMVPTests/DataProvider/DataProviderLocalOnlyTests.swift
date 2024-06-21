@@ -1,97 +1,122 @@
 //
 //  DataProviderLocalOnlyTests.swift
-//  IRShowcaseMVPTests
+//  IRShowcaseMVP
 //
-//  Created by Nuno Salvador on 13/05/2024.
+//  Created by Nuno Salvador on 20/06/2024.
 //  Copyright © 2024 Nuno Salvador. All rights reserved.
 //
 
+import Testing
 import Foundation
-import Quick
-import Nimble
-import SwiftyMocky
 import Combine
+import SwiftyMocky
 
 @testable import IRShowcaseMVP
 
-class DataProviderLocalOnlyTests: QuickSpec {
-    override class func spec() {
-        describe("DataProvidersTests") {
-            var localDataProvider: DataProvider<DummyProductDataContainer>!
-            let network = APIServiceMock()
-            let persistence = PersistenceLayerMock()
-            var cancellables: Set<AnyCancellable>!
+@Suite(.tags(.dataProvider, .localDataProviderConfig))
+struct DataProviderLocalOnlyTests {
+    let network = APIServiceMock()
+    let persistence = PersistenceLayerMock()
+    let dpConfig = DataProviderConfiguration.localOnly
 
-            beforeEach {
-                let localConfig = DataProviderConfiguration.localOnly
-                let ldp: DataProvider<DummyProductDataContainer> = DataProviderBuilder.makeDataProvider(config: localConfig, network: network, persistence: persistence)
-                localDataProvider = ldp
-                cancellables = Set<AnyCancellable>()
-            }
+    @Test(.tags(.fetchStuffPublisher), .tags(.fetchStuff))
+    func shouldGetASuccessResultOnTheHappyPath() async throws {
+        let localDataProvider: DataProvider<DummyProductDataContainer> = DataProviderBuilder.makeDataProvider(config: dpConfig, network: network, persistence: persistence)
+        var cancellables = Set<AnyCancellable>()
 
-            afterEach {
-                localDataProvider = nil
-                cancellables.removeAll()
-            }
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
 
-            describe("local data provider") {
-                context("fetch stuff method") {
-                    it("should get a success result on the happy path") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-
-                        Given(persistence, .fetchResource(.any, willReturn: {
-                            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
-                            let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
-                            return publisher.eraseToAnyPublisher()
-                        }()
-                        ))
-
-                        waitUntil(timeout: .seconds(5), action: { (done) in
-                            localDataProvider
-                                .fetchStuff(resource: .dummyProductsAll)
-                                .sink { completion in
-                                    switch completion {
-                                    case .finished:
-                                        break
-                                    case .failure:
-                                        fail()
-                                    }
-                                } receiveValue: { values in
-                                    expect(values.0.products.count).to(beGreaterThan(0))
-                                    done()
-                                }
-                                .store(in: &cancellables)
-                        })
-                    }
-
-                    it("should get a response after persistence error") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-
-                        Given(persistence, .fetchResource(.any, willReturn: {
-                            let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
-                            publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "No known resource"))))
-                            return publisher.eraseToAnyPublisher()
-                        }()
-                        ))
-
-                        waitUntil(timeout: .seconds(5), action: { (done) in
-                            localDataProvider
-                                .fetchStuff(resource: .dummyProductsAll)
-                                .sink { completion in
-                                    switch completion {
-                                    case .finished:
-                                        break
-                                    case .failure:
-                                        done()
-                                    }
-                                } receiveValue: { values in
-                                    fail()
-                                }
-                                .store(in: &cancellables)
-                        })
-                    }
+        Given(
+            persistence,
+            .fetchResource(
+                .any,
+                willProduce: { stubber in
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    stubber.return(dataContainer)
                 }
-            }
+            )
+        )
+        Given(
+            persistence,
+            .fetchResourcePublisher(
+                .any,
+                willProduce: { stubber in
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
+                    stubber.return(publisher.eraseToAnyPublisher())
+                }
+            )
+        )
+
+        try await confirmation { confirmation in
+            // Combine
+            localDataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
+                .sink { completion in
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure:
+                        #expect(false == false)
+                    }
+                } receiveValue: { values in
+                    #expect(values.0.products.count > 0)
+                    confirmation()
+                }
+                .store(in: &cancellables)
+
+            let duration = UInt64(0.3 * 1_000_000_000)
+            try await Task.sleep(nanoseconds: duration)
+        }
+
+        // Async
+        let values = try await localDataProvider.fetchStuff(resource: .dummyProductsAll)
+        #expect(values.count > 0)
+    }
+
+    @Test(.tags(.fetchStuffPublisher), .tags(.fetchStuff))
+    func shouldGetAResponseAfterPersistenceError() async throws {
+        let localDataProvider: DataProvider<DummyProductDataContainer> = DataProviderBuilder.makeDataProvider(config: dpConfig, network: network, persistence: persistence)
+        var cancellables = Set<AnyCancellable>()
+
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+
+        Given(
+            persistence,
+            .fetchResource(
+                .any,
+                willThrow: PersistenceLayerError.persistence(error: NSError.error(withMessage: "No known resource"))
+            )
+        )
+
+        Given(persistence, .fetchResourcePublisher(.any, willReturn: {
+            let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
+            publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "No known resource"))))
+            return publisher.eraseToAnyPublisher()
+        }()
+        ))
+
+        try await confirmation { confirmation in
+            // Combine
+            localDataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
+                .sink { completion in
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure:
+                        confirmation()
+                    }
+                } receiveValue: { values in
+                    #expect(false == true)
+                }
+                .store(in: &cancellables)
+
+            let duration = UInt64(0.3 * 1_000_000_000)
+            try await Task.sleep(nanoseconds: duration)
+        }
+
+        // Async
+        await #expect(throws: DataProviderError.self) {
+            try await localDataProvider.fetchStuff(resource: .dummyProductsAll)
         }
     }
 }

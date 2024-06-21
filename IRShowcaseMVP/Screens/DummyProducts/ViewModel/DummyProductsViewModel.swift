@@ -10,7 +10,8 @@ import Foundation
 import SwiftUI
 import Combine
 
-final class DummyProductsViewObservableObject: ObservableObject {
+@MainActor
+final class DummyProductsViewObservableObject: ObservableObject, Sendable {
     let navBarTitle = "Dummy products list"
     @Published var dummyProducts: [DummyProduct] = []
     @Published var selectedDummyProduct: DummyProduct?
@@ -22,9 +23,9 @@ final class DummyProductsViewObservableObject: ObservableObject {
 // sourcery: AutoMockable
 protocol DummyProductsViewModel {
     var observableObject: DummyProductsViewObservableObject { get }
-    func onAppear()
-    func onItemAppear(_ item: DummyProduct)
-    func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView
+    @MainActor func onAppear()
+    @MainActor func onItemAppear(_ item: DummyProduct)
+    @MainActor func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView
 }
 
 // sourcery: AutoMockable
@@ -38,6 +39,7 @@ final class DummyProductsViewModelImpl: DummyProductsViewModel {
     var observableObject: DummyProductsViewObservableObject
     private var cancellables = Set<AnyCancellable>()
 
+    @MainActor
     init(
         routing: DummyProductsScreenRouting,
         localDataProvider: DummyProductsFetchAndSaveDataProvider,
@@ -51,58 +53,63 @@ final class DummyProductsViewModelImpl: DummyProductsViewModel {
 }
 
 extension DummyProductsViewModelImpl {
+    @MainActor
     func onAppear() {
-        fetchDummyProducts()
+        Task { @MainActor in
+            await fetchDummyProducts()
+        }
     }
 
+    @MainActor
     func onItemAppear(_ item: DummyProduct) {}
 
+    @MainActor
     func onDummyProductTap(dummyProduct: DummyProduct) -> DummyProductDetailsView {
         routing.makeDummyProductDetailsView(dummyProduct: dummyProduct)
     }
 }
 
 private extension DummyProductsViewModelImpl {
-    func fetchDummyProducts() {
+    @MainActor
+    func fetchDummyProducts() async {
         guard !observableObject.pagingState.isFetching,
-              self.observableObject.pagingState != .noMorePagesToLoad
+              observableObject.pagingState != .noMorePagesToLoad
         else { return }
 
         observableObject.pagingState = .loadingFirstPage
+        
+        // Fetch locally and if error fetch remotely
+        let fetchResult: Result<(DummyProductDataContainer, DataProviderSource), Error>
+        do {
+            let value = try await localDataProvider.fetchDummyProductsAll()
+            fetchResult = .success(value)
+        } catch {
+            do {
+                let value = try await remoteDataProvider.fetchDummyProductsAll()
+                fetchResult = .success(value)
+            } catch {
+                fetchResult = .failure(error)
+            }
+        }
 
-        localDataProvider.fetchDummyProductsAll()
-            .catch({ [weak self] _ in
-                guard let self = self else { return Empty<(DummyProductDataContainer, DataProviderSource), Error>().eraseToAnyPublisher() }
-                return self.remoteDataProvider.fetchDummyProductsAll().eraseToAnyPublisher()
-            })
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { [weak self] completion in
-                guard let self = self else { return }
+        switch fetchResult {
+        case .success(let success):
+            let (value, dataProviderSource) = success
+            switch dataProviderSource {
+            case .remote:
+                self.localDataProvider.persistObjects(value) { _, _ in }
+            case .local:
+                break
+            }
 
-                switch completion {
-                case .finished:
-                    break
-                case .failure(let error):
-                    self.observableObject.pagingState = .error
-                    self.observableObject.errorViewLabel = error.buildString() ?? self.observableObject.errorViewLabel
-                    self.observableObject.showErrorView = true
-                }
-            }, receiveValue: { [weak self] tuple in
-                guard let self = self else { return }
-                let (value, dataProviderSource) = tuple
-
-                switch dataProviderSource {
-                case .remote:
-                    self.localDataProvider.persistObjects(value) { _, _ in }
-                case .local:
-                    break
-                }
-
-                self.observableObject.pagingState = .noMorePagesToLoad
-                self.observableObject.dummyProducts = value.products
-                print("dataProviderSource: " + dataProviderSource.rawValue)
-            })
-            .store(in: &cancellables)
+            self.observableObject.pagingState = .noMorePagesToLoad
+            self.observableObject.dummyProducts = value.products
+            print("dataProviderSource: " + dataProviderSource.rawValue)
+        case .failure(let error):
+            self.observableObject.pagingState = .error
+            self.observableObject.errorViewLabel = error.buildString() ?? self.observableObject.errorViewLabel
+            self.observableObject.showErrorView = true
+        }
     }
 }
 

@@ -10,32 +10,42 @@ import Foundation
 import Combine
 
 extension URLSession {
-    func fetchData(_ request: URLRequest) -> AnyPublisher<(Data, URLResponse), DataProviderError> {
-        Future { promise in
-            self.dataTask(with: request) { data, response, error in
-                guard let data = data, let response = response else {
-                    guard let e = error else {
-                        promise(.failure(.unknown))
-                        return
-                    }
-                    promise(.failure(.requestError(error: e)))
-                    return
-                }
+    func fetchDataPublisher(_ request: URLRequest) -> AnyPublisher<(Data, URLResponse), DataProviderError> {
+        return self.dataTaskPublisher(for: request)
+            .subscribe(on: DispatchQueue.global())
+            .tryMap { value -> (Data, URLResponse) in
+                let data = value.data
+                let response = value.response
 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    promise(.failure(.unknown))
-                    return
+                    throw DataProviderError.unknown
                 }
 
                 guard 200..<300 ~= httpResponse.statusCode else {
-                    promise(.failure(.requestError(httpStatusCode: httpResponse.statusCode, error: error)))
-                    return
+                    throw DataProviderError.unknown
                 }
 
-                promise(.success((data, httpResponse)))
+                return (data, httpResponse)
             }
-            .resume()
+            .mapError { error in
+                DataProviderError.fetch(error: error)
+            }
+            .eraseToAnyPublisher()
+    }
+}
+
+extension URLSession {
+    func fetchData(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        let (data, response) = try await self.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw DataProviderError.invalidHttpUrlResponse
         }
-        .eraseToAnyPublisher()
+
+        guard 200..<300 ~= httpResponse.statusCode else {
+            throw DataProviderError.requestHttpStatusError(httpStatusCode: httpResponse.statusCode, error: nil)
+        }
+
+        return (data, httpResponse)
     }
 }

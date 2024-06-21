@@ -15,6 +15,7 @@ import OrderedCollections
 @testable import IRShowcaseMVP
 
 final class DummyProductsListViewTests: TestCase {
+    @MainActor
     func testDummyProductsListView_LoadedList() {
         // Given
         let view = DummyProductsView(
@@ -27,6 +28,7 @@ final class DummyProductsListViewTests: TestCase {
         cwSnapshotOnDevices(view: view)
     }
 
+    @MainActor
     func testDummyProductsListView_FetchingNewPage() {
         // Given
         let view = DummyProductsView(
@@ -41,6 +43,7 @@ final class DummyProductsListViewTests: TestCase {
         cwSnapshotOnDevices(view: view)
     }
 
+    @MainActor
     func testDummyProductsListView_ErrorView() {
         // Given
         let view = DummyProductsView(
@@ -56,6 +59,7 @@ final class DummyProductsListViewTests: TestCase {
 
 // MARK: - Private methods
 private extension DummyProductsListViewTests {
+    @MainActor
     func makeViewModel(observableObject: DummyProductsViewObservableObject) -> DummyProductsViewModelMock {
         let viewModelMock = DummyProductsViewModelMock()
 
@@ -77,6 +81,7 @@ private extension DummyProductsListViewTests {
         return viewModelMock
     }
 
+    @MainActor
     func makeDummyProductDetailsViewPresenter(observableObject: DummyProductDetailsViewObservableObject) -> DummyProductDetailsViewModelMock {
         let viewModelMock = DummyProductDetailsViewModelMock()
 

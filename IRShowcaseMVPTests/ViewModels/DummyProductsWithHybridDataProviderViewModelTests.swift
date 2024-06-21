@@ -24,6 +24,7 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
         cancellables = Set<AnyCancellable>()
     }
 
+    @MainActor
     func testShouldFetchRemoteDataIfDataIsntAvailableLocally() {
         let expectation = self.expectation(description: "Expected to ShouldFetchRemoteDataIfDataIsntAvailableLocally")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -41,7 +42,8 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
             dataProvider: dataProvider
         )
 
-        Given(persistenceMock, .fetchResource(.any, willReturn: {
+        Given(persistenceMock, .fetchResource(.any, willThrow: PersistenceLayerError.emptyResult(error: DataProviderError.casting)))
+        Given(persistenceMock, .fetchResourcePublisher(.any, willReturn: {
             let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
             publisher.send(completion: .failure(PersistenceLayerError.emptyResult(error: DataProviderError.casting)))
             return publisher.eraseToAnyPublisher()
@@ -49,7 +51,29 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
         ))
 
         Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-        Given(networkMock, .fetchData( request: .any, willReturn: {
+        Given(
+            networkMock,
+            .fetchData(
+                request: .any,
+                willProduce: { stubber in
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    var data: Data? = nil
+                    do {
+                        let jsonData = try JSONEncoder().encode(dataContainer)
+                        data = jsonData
+                    } catch {
+                        stubber.throw(DataProviderError.parsing(error: DataProviderError.parsing(error: error)))
+                    }
+
+                    if let d = data {
+                        stubber.return((d, URLResponse()))
+                    } else {
+                        stubber.throw(DataProviderError.parsing(error: DataProviderError.unknown))
+                    }
+                }
+            )
+        )
+        Given(networkMock, .fetchDataPublisher(request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
 
             let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
@@ -86,7 +110,9 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
                 XCTAssert(array.count > 0)
 
                 persistenceMock.verify(.fetchResource(.any), count: .exactly(1))
+                persistenceMock.verify(.fetchResourcePublisher(.any), count: .exactly(0))
                 networkMock.verify(.fetchData(request: .any), count: .exactly(1))
+                networkMock.verify(.fetchDataPublisher(request: .any), count: .exactly(0))
                 persistenceMock.verify(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any), count: .exactly(1))
 
                 expectation.fulfill()
@@ -96,6 +122,7 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
         subject.onAppear()
     }
 
+    @MainActor
     func testShouldntFetchRemotelyIfDataIsAvailableLocally() {
         let expectation = self.expectation(description: "Expected to ShouldntFetchRemotelyIfDataIsAvailableLocally")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -115,13 +142,27 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
 
         Given(persistenceMock, .fetchResource(.any, willReturn: {
             let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+            return dataContainer
+        }()
+        ))
+        Given(persistenceMock, .fetchResourcePublisher(.any, willReturn: {
+            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
             let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
             return publisher.eraseToAnyPublisher()
         }()
         ))
 
         Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-        Given(networkMock, .fetchData( request: .any, willReturn: {
+        Given(
+            networkMock,
+            .fetchData(
+                request: .any,
+                willProduce: { stubber in
+                    stubber.throw(DataProviderError.parsing(error: DataProviderError.unknown))
+                }
+            )
+        )
+        Given(networkMock, .fetchDataPublisher(request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
             publisher.send(completion: .failure(DataProviderError.noConnectivity))
             return publisher.eraseToAnyPublisher()
@@ -144,7 +185,9 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
                 XCTAssert(array.count > 0)
 
                 persistenceMock.verify(.fetchResource(.any), count: .exactly(1))
+                persistenceMock.verify(.fetchResourcePublisher(.any), count: .exactly(0))
                 networkMock.verify(.fetchData(request: .any), count: .exactly(0))
+                networkMock.verify(.fetchDataPublisher(request: .any), count: .exactly(0))
                 persistenceMock.verify(.persistObjects(Parameter<DummyProductDataContainer>.any, saveCompletion: .any), count: .exactly(0))
 
                 expectation.fulfill()
@@ -154,6 +197,7 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
         subject.onAppear()
     }
 
+    @MainActor
     func testShowErrorIfItCouldntFetchLocallyOrRemote() {
         let expectation = self.expectation(description: "Expected to ShowErrorIfItCouldntFetchLocallyOrRemote")
         defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
@@ -171,7 +215,8 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
             dataProvider: dataProvider
         )
 
-        Given(persistenceMock, .fetchResource(.any, willReturn: {
+        Given(persistenceMock, .fetchResource(.any, willThrow: PersistenceLayerError.emptyResult(error: DataProviderError.casting)))
+        Given(persistenceMock, .fetchResourcePublisher(.any, willReturn: {
             let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
             publisher.send(completion: .failure(PersistenceLayerError.emptyResult(error: DataProviderError.casting)))
             return publisher.eraseToAnyPublisher()
@@ -179,7 +224,16 @@ final class DummyProductsWithHybridDataProviderViewModelTests: TestCase {
         ))
 
         Given(networkMock, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-        Given(networkMock, .fetchData( request: .any, willReturn: {
+        Given(
+            networkMock,
+            .fetchData(
+                request: .any,
+                willProduce: { stubber in
+                    stubber.throw(DataProviderError.parsing(error: DataProviderError.unknown))
+                }
+            )
+        )
+        Given(networkMock, .fetchDataPublisher(request: .any, willReturn: {
             let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
             publisher.send(completion: .failure(DataProviderError.noConnectivity))
             return publisher.eraseToAnyPublisher()

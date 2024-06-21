@@ -15,16 +15,16 @@ import Combine
 
 class PersistenceTests: XCTestCase {
     private var persistence: PersistenceLayerMock!
-    private var persistenceLoadHandler: DataProviderHandlers<DummyProductDataContainer>.PersistenceLoadHandler!
-    private var persistenceSaveHandler: DataProviderHandlers<DummyProductDataContainer>.PersistenceSaveHandler!
-    private var persistenceRemoveHandler: DataProviderHandlers<DummyProductDataContainer>.PersistenceRemoveHandler!
+    private var persistenceLoadHandler: DataProviderPublisherHandlers<DummyProductDataContainer>.PersistenceLoadHandler!
+    private var persistenceSaveHandler: DataProviderPublisherHandlers<DummyProductDataContainer>.PersistenceSaveHandler!
+    private var persistenceRemoveHandler: DataProviderPublisherHandlers<DummyProductDataContainer>.PersistenceRemoveHandler!
     private var cancellables: Set<AnyCancellable>!
 
     override func setUp() {
         super.setUp()
         cancellables = Set<AnyCancellable>()
         persistence = PersistenceLayerMock()
-        let dpHandlersBuilder = DataProviderHandlersBuilder<DummyProductDataContainer>()
+        let dpHandlersBuilder = DataProviderPublisherHandlersBuilder<DummyProductDataContainer>()
         persistenceLoadHandler = dpHandlersBuilder.standardPersistenceLoadHandler
         persistenceSaveHandler = dpHandlersBuilder.standardPersistenceSaveHandler
         persistenceRemoveHandler = dpHandlersBuilder.standardPersistenceRemoveHandler
@@ -44,7 +44,7 @@ class PersistenceTests: XCTestCase {
 
         Given(
             persistence,
-            .fetchResource(
+            .fetchResourcePublisher(
                 .any,
                 willReturn: {
                     let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
@@ -74,7 +74,7 @@ class PersistenceTests: XCTestCase {
 
         Given(
             persistence,
-            .fetchResource(
+            .fetchResourcePublisher(
                 .any,
                 willReturn: {
                     let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
@@ -104,7 +104,7 @@ class PersistenceTests: XCTestCase {
 
         Given(
             persistence,
-            .fetchResource(
+            .fetchResourcePublisher(
                 .any,
                 willReturn: {
                     let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
@@ -179,7 +179,7 @@ class PersistenceTests: XCTestCase {
 
         Given(
             persistence,
-            .removeResource(
+            .removeResourcePublisher(
                 .any,
                 willReturn: {
                     let publisher = CurrentValueSubject<Bool, PersistenceLayerError>(true)
@@ -208,7 +208,7 @@ class PersistenceTests: XCTestCase {
 
         Given(
             persistence,
-            .removeResource(
+            .removeResourcePublisher(
                 .any,
                 willReturn: {
                     let publisher = CurrentValueSubject<Bool, PersistenceLayerError>(true)

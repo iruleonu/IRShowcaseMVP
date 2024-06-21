@@ -38,6 +38,7 @@ final class DummyProductDetailsViewModelImpl: DummyProductDetailsViewModel {
     private(set) var routing: DummyProductDetailsScreenRouting
     var observableObject: DummyProductDetailsViewObservableObject
 
+    @MainActor
     init(routing: DummyProductDetailsScreenRouting, dummyProduct: DummyProduct) {
         self.observableObject = DummyProductDetailsViewObservableObject(dummyProduct: dummyProduct)
         self.routing = routing

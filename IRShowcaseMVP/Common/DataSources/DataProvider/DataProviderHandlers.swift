@@ -7,14 +7,13 @@
 //
 
 import Foundation
-import Combine
 
-struct DataProviderHandlers<T: Codable> {
-    typealias NetworkHandler = (URLRequestFetchable, URLRequest) -> AnyPublisher<Data, DataProviderError>
-    typealias NetworkParserHandler = (Data) -> AnyPublisher<T, DataProviderError>
-    typealias PersistenceSaveHandler = (PersistenceLayerSave, T) -> AnyPublisher<T, DataProviderError>
-    typealias PersistenceLoadHandler = (PersistenceLayerLoad, Resource) -> AnyPublisher<T, DataProviderError>
-    typealias PersistenceRemoveHandler = (PersistenceLayerRemove, Resource) -> AnyPublisher<Bool, DataProviderError>
+struct DataProviderHandlers<T: Codable & Sendable>: Sendable {
+    typealias NetworkHandler = @Sendable (URLRequestFetchable, URLRequest) async throws -> Data
+    typealias NetworkParserHandler = @Sendable (Data) async throws -> T
+    typealias PersistenceSaveHandler = @Sendable (PersistenceLayerSave, T) async throws -> T
+    typealias PersistenceLoadHandler = @Sendable (PersistenceLayerLoad, Resource) async throws -> T
+    typealias PersistenceRemoveHandler = @Sendable (PersistenceLayerRemove, Resource) async throws -> Bool
 
     let networkHandler: NetworkHandler
     let networkParserHandler: NetworkParserHandler
@@ -22,11 +21,13 @@ struct DataProviderHandlers<T: Codable> {
     let persistenceLoadHandler: PersistenceLoadHandler
     let persistenceRemoveHandler: PersistenceRemoveHandler
 
-    init(networkHandler nh: @escaping NetworkHandler = { (_, _) in Empty().eraseToAnyPublisher() },
-         networkParserHandler nph: @escaping NetworkParserHandler = { _ in Empty().eraseToAnyPublisher() },
-         persistenceSaveHandler psh: @escaping PersistenceSaveHandler = { (_, _) in Empty().eraseToAnyPublisher() },
-         persistenceLoadHandler plh: @escaping PersistenceLoadHandler = { (_, _) in Empty().eraseToAnyPublisher() },
-         persistenceRemoveHandler prh: @escaping PersistenceRemoveHandler = { (_, _) in Empty().eraseToAnyPublisher() }) {
+    init(
+        networkHandler nh: @escaping NetworkHandler,
+        networkParserHandler nph: @escaping NetworkParserHandler,
+        persistenceSaveHandler psh: @escaping PersistenceSaveHandler,
+        persistenceLoadHandler plh: @escaping PersistenceLoadHandler,
+        persistenceRemoveHandler prh: @escaping PersistenceRemoveHandler
+    ) {
         networkHandler = nh
         networkParserHandler = nph
         persistenceSaveHandler = psh
@@ -34,3 +35,4 @@ struct DataProviderHandlers<T: Codable> {
         persistenceRemoveHandler = prh
     }
 }
+

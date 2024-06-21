@@ -9,6 +9,7 @@
 // Configuration settings file format documentation can be found at:
 // https://help.apple.com/xcode/#/dev745c5c974
 OTHER_SWIFT_FLAGS = "-DDEBUG";
+ENABLE_USER_SCRIPT_SANDBOXING = false;
 APIBASEURL = https:/$()/dummyjson.com
 APIBabyNamePopularityBASEURL = https:/$()/data.cityofnewyork.us/api
 APIAuthBearerKey = ;

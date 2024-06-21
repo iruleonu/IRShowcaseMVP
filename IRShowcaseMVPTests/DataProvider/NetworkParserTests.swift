@@ -36,7 +36,7 @@ class NetworkParserTests: XCTestCase {
 
         XCTAssertNotNil(data)
 
-        let dpHandlersBuilder = DataProviderHandlersBuilder<DummyProductDataContainer>()
+        let dpHandlersBuilder = DataProviderPublisherHandlersBuilder<DummyProductDataContainer>()
         let networkParser = dpHandlersBuilder.standardNetworkParserHandler
 
         networkParser(data!)
@@ -54,7 +54,7 @@ class NetworkParserTests: XCTestCase {
         defer { self.waitForExpectations(timeout: 3.0, handler: nil) }
 
         let data: Data? = NSData() as Data
-        let dpHandlersBuilder = DataProviderHandlersBuilder<DummyProductDataContainer>()
+        let dpHandlersBuilder = DataProviderPublisherHandlersBuilder<DummyProductDataContainer>()
         let networkParser = dpHandlersBuilder.standardNetworkParserHandler
 
         networkParser(data!)

@@ -7,8 +7,6 @@
 //
 
 import Foundation
-import UIKit
-import Combine
 
 enum APIServiceError: Error {
     case unknown
@@ -40,19 +38,19 @@ protocol APIService: APIURLRequestProtocol, URLRequestFetchable {
     init(serverConfig: ServerConfigProtocol)
 }
 
-protocol APIBaseUrlProtocol {
+protocol APIBaseUrlProtocol: Sendable {
     var apiBaseUrl: URL { get }
 }
 
-protocol APIAuthBearerKeyProtocol {
+protocol APIAuthBearerKeyProtocol: Sendable {
     var apiAuthBearerKey: String { get }
 }
 
-protocol APIUserAgentProtocol {
+protocol APIUserAgentProtocol: Sendable {
     var apiUserAgent: String { get }
 }
 
-protocol APIURLRequestProtocol {
+protocol APIURLRequestProtocol: Sendable {
     func buildUrlRequest(resource: Resource) -> URLRequest
 }
 
@@ -101,28 +99,6 @@ struct APIServiceImpl: APIService {
         }
 
         session = URLSession(configuration: sessionConfiguration)
-    }
-}
-
-extension APIServiceImpl: AppService {
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        return true
-    }
-}
-
-extension APIServiceImpl: Fetchable {
-    typealias I = URLRequest
-    typealias V = (Data, URLResponse)
-    typealias E = DataProviderError
-    
-    func fetchData(_ input: I) -> AnyPublisher<V, E> {
-        return session.fetchData(input)
-    }
-}
-
-extension APIServiceImpl: URLRequestFetchable {
-    func fetchData(request: URLRequest) -> AnyPublisher<(Data, URLResponse), DataProviderError> {
-        return session.fetchData(request)
     }
 }
 

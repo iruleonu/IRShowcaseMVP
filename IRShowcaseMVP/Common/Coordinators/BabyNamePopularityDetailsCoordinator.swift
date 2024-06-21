@@ -10,7 +10,8 @@ import Foundation
 import UIKit
 
 // sourcery: AutoMockable
-protocol BabyNamePopularityDetailsRouting {
+@MainActor
+protocol BabyNamePopularityDetailsRouting: Sendable {
 
 }
 

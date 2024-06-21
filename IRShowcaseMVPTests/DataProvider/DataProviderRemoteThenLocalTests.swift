@@ -1,295 +1,455 @@
 //
 //  DataProviderRemoteThenLocalTests.swift
-//  IRShowcaseMVPTests
+//  IRShowcaseMVP
 //
 //  Created by Nuno Salvador on 13/05/2024.
 //  Copyright © 2024 Nuno Salvador. All rights reserved.
 //
 
+import Testing
 import Foundation
-import Quick
-import Nimble
-import SwiftyMocky
 import Combine
+import SwiftyMocky
 
 @testable import IRShowcaseMVP
 
-class DataProviderRemoteThenLocalTests: QuickSpec {
-    override class func spec() {
-        describe("DataProvidersTests") {
-            var dataProvider: DataProvider<DummyProductDataContainer>!
-            let network = APIServiceMock()
-            let persistence = PersistenceLayerMock()
-            var cancellables: Set<AnyCancellable>!
+@Suite(.tags(.dataProvider, .remoteFirstThenLocalDataProviderConfig))
+final class DataProviderRemoteThenLocalTests {
+    let network = APIServiceMock()
+    let persistence = PersistenceLayerMock()
+    let dpConfig = DataProviderConfiguration.remoteFirstThenLocal
+    let dataProvider: DataProvider<DummyProductDataContainer>
+    var cancellables: Set<AnyCancellable>
 
-            beforeEach {
-                let dp: DataProvider<DummyProductDataContainer> = DataProviderBuilder.makeDataProvider(
-                    config: DataProviderConfiguration.remoteFirstThenLocal,
-                    network: network,
-                    persistence: persistence
-                )
-                dataProvider = dp
-                cancellables = Set<AnyCancellable>()
+    init() async throws {
+        dataProvider = DataProviderBuilder.makeDataProvider(config: dpConfig, network: network, persistence: persistence)
+        cancellables = Set<AnyCancellable>()
+    }
+
+    deinit {
+        cancellables.removeAll()
+    }
+
+    @Test(.tags(.fetchStuffPublisher))
+    func shouldGetASuccessResultFromBothLayersOnTheHappyPathPublisher() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(network, .fetchDataPublisher( request: .any, willReturn: {
+            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
+
+            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+            var data: Data? = nil
+            do {
+                let jsonData = try JSONEncoder().encode(dataContainer)
+                data = jsonData
+            } catch { }
+
+            if let d = data {
+                publisher.send((d, URLResponse()))
+            } else {
+                publisher.send(completion: .failure(DataProviderError.parsing(error: DataProviderError.unknown)))
             }
 
-            afterEach {
-                dataProvider = nil
-                cancellables.removeAll()
-            }
+            return publisher.eraseToAnyPublisher()
+        }()
+        ))
 
-            describe("remote first then local data provider") {
-                context("fetch stuff method") {
-                    it("should get a success result (value) from both layers on the happy path") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(
+            persistence,
+            .fetchResourcePublisher(
+                .any,
+                willProduce: { stubber in
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
+                    stubber.return(publisher.eraseToAnyPublisher())
+                }
+            )
+        )
 
-                        Given(persistence, .fetchResource(
-                            .any,
-                            willReturn: {
-                                let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
-                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
-                                return publisher.eraseToAnyPublisher()
-                            }()
-                        ))
+        try await confirmation(expectedCount: 2) { confirmation in
+            dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
+                .sink { completion in
+                    confirmation()
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure:
+                        Issue.record("Shouldnt fail here")
+                    }
+                } receiveValue: { values in
+                    let (value, source) = values
 
-                        Given(network, .fetchData( request: .any, willReturn: {
-                            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
-
-                            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
-                            var data: Data? = nil
-                            do {
-                                let jsonData = try JSONEncoder().encode(dataContainer)
-                                data = jsonData
-                            } catch { }
-
-                            if let d = data {
-                                publisher.send((d, URLResponse()))
-                            } else {
-                                publisher.send(completion: .failure(DataProviderError.parsing(error: DataProviderError.unknown)))
-                            }
-
-                            return publisher.eraseToAnyPublisher()
-                        }()
-                        ))
-
-                        waitUntil(timeout: .seconds(5), action: { (done) in
-                            var invocationsCount = 0
-
-                            dataProvider
-                                .fetchStuff(resource: .dummyProductsAll)
-                                .sink { completion in
-                                    switch completion {
-                                    case .finished:
-                                        break
-                                    case .failure:
-                                        fail()
-                                    }
-                                } receiveValue: { values in
-                                    let (value, source) = values
-
-                                    switch source {
-                                    case .local:
-                                        expect(value.products.count).to(beGreaterThan(0))
-                                    case .remote:
-                                        expect(value.products.count).to(beGreaterThan(0))
-                                    }
-
-                                    invocationsCount += 1;
-                                    if (invocationsCount == 2) {
-                                        done()
-                                    }
-                                }
-                                .store(in: &cancellables)
-                        })
+                    switch source {
+                    case .local:
+                        #expect(value.products.count > 0)
+                    case .remote:
+                        #expect(value.products.count > 0)
                     }
 
-                    it("should error if both layers returns an error and/or invalid data") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+                    confirmation()
+                }
+                .store(in: &cancellables)
 
-                        Given(persistence, .fetchResource(
-                            .any,
-                            willReturn: {
-                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
-                                publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))))
-                                return publisher.eraseToAnyPublisher()
-                            }()
-                        ))
+            let duration = UInt64(0.3 * 1_000_000_000)
+            try await Task.sleep(nanoseconds: duration)
+        }
+    }
 
-                        Given(network, .fetchData( request: .any, willReturn: {
-                            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((NSData() as Data, URLResponse()))
-                            publisher.send(completion: .failure(DataProviderError.fetch(error: NSError.error(withMessage: "Fetch error"))))
-                            return publisher.eraseToAnyPublisher()
-                        }()
-                        ))
+    @Test(.tags(.fetchStuff))
+    func shouldGetASuccessResultFromBothLayersOnTheHappyPath() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(
+            network,
+            .fetchData(
+                request: .any,
+                willProduce: { stubber in
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    var data: Data? = nil
+                    do {
+                        let jsonData = try JSONEncoder().encode(dataContainer)
+                        data = jsonData
+                    } catch { }
 
-                        waitUntil(timeout: .seconds(5), action: { (done) in
-                            dataProvider
-                                .fetchStuff(resource: .dummyProductsAll)
-                                .sink { completion in
-                                    switch completion {
-                                    case .finished:
-                                        break
-                                    case .failure:
-                                        done()
-                                    }
-                                } receiveValue: { values in
-                                    fail()
-                                }
-                                .store(in: &cancellables)
-                        })
-                    }
-
-                    it("should get persisted posts even if parsing step after network fails") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-
-                        Given(persistence, .fetchResource(
-                            .any,
-                            willReturn: {
-                                let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
-                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
-                                return publisher.eraseToAnyPublisher()
-                            }()
-                        ))
-
-                        Given(network, .fetchData( request: .any, willReturn: {
-                            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((NSData() as Data, URLResponse()))
-                            publisher.send(completion: .failure(DataProviderError.fetch(error: NSError.error(withMessage: "Fetch error"))))
-                            return publisher.eraseToAnyPublisher()
-                        }()
-                        ))
-
-                        waitUntil(timeout: .seconds(5), action: { (done) in
-                            dataProvider
-                                .fetchStuff(resource: .dummyProductsAll)
-                                .sink { completion in
-                                    switch completion {
-                                    case .finished:
-                                        break
-                                    case .failure:
-                                        fail()
-                                    }
-                                } receiveValue: { values in
-                                    expect(values.0.products.count).to(beGreaterThan(0))
-                                    done()
-                                }
-                                .store(in: &cancellables)
-                        })
-                    }
-
-                    it("should get network posts if theres was an error on the persistence layer") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-
-                        Given(persistence, .fetchResource(
-                            .any,
-                            willReturn: {
-                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
-                                publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))))
-                                return publisher.eraseToAnyPublisher()
-                            }()
-                        ))
-
-                        Given(network, .fetchData( request: .any, willReturn: {
-                            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
-
-                            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
-                            var data: Data? = nil
-                            do {
-                                let jsonData = try JSONEncoder().encode(dataContainer)
-                                data = jsonData
-                            } catch { }
-
-                            if let d = data {
-                                publisher.send((d, URLResponse()))
-                            } else {
-                                publisher.send(completion: .failure(DataProviderError.parsing(error: DataProviderError.unknown)))
-                            }
-
-                            return publisher.eraseToAnyPublisher()
-                        }()
-                        ))
-
-                        waitUntil(timeout: .seconds(5), action: { (done) in
-                            dataProvider
-                                .fetchStuff(resource: .dummyProductsAll)
-                                .sink { completion in
-                                    switch completion {
-                                    case .finished:
-                                        break
-                                    case .failure:
-                                        fail()
-                                    }
-                                } receiveValue: { values in
-                                    expect(values.0.products.count).to(beGreaterThan(0))
-                                    done()
-                                }
-                                .store(in: &cancellables)
-                        })
-                    }
-
-                    it("should receive values from both layers even if nothing (empty array) is returned from the persistence layer") {
-                        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
-
-                        Given(persistence, .fetchResource(
-                            .any,
-                            willReturn: {
-                                let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
-                                publisher.send(.stub())
-                                return publisher.eraseToAnyPublisher()
-                            }()
-                        ))
-
-                        Given(network, .fetchData( request: .any, willReturn: {
-                            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
-
-                            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
-                            var data: Data? = nil
-                            do {
-                                let jsonData = try JSONEncoder().encode(dataContainer)
-                                data = jsonData
-                            } catch { }
-
-                            if let d = data {
-                                publisher.send((d, URLResponse()))
-                            } else {
-                                publisher.send(completion: .failure(DataProviderError.parsing(error: DataProviderError.unknown)))
-                            }
-
-                            return publisher.eraseToAnyPublisher()
-                        }()
-                        ))
-
-                        waitUntil(timeout: .seconds(5), action: { (done) in
-                            var invocationsCount = 0;
-                            
-                            dataProvider
-                                .fetchStuff(resource: .dummyProductsAll)
-                                .sink { completion in
-                                    switch completion {
-                                    case .finished:
-                                        break
-                                    case .failure:
-                                        fail()
-                                    }
-                                } receiveValue: { values in
-                                    let (value, source) = values
-
-                                    switch source {
-                                    case .local:
-                                        expect(value.products.count).to(equal(0))
-                                    case .remote:
-                                        expect(value.products.count).to(beGreaterThan(0))
-                                    }
-
-                                    invocationsCount += 1;
-                                    if (invocationsCount == 2) {
-                                        done()
-                                    }
-                                }
-                                .store(in: &cancellables)
-                        })
+                    if let d = data {
+                        stubber.return((d, URLResponse()))
+                    } else {
+                        stubber.throw(DataProviderError.parsing(error: DataProviderError.unknown))
                     }
                 }
-            }
+            )
+        )
+        Given(
+            persistence,
+            .fetchResource(
+                .any,
+                willProduce: { stubber in
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    stubber.return(dataContainer)
+                }
+            )
+        )
+
+        let values = try await dataProvider.fetchStuff(resource: .dummyProductsAll)
+        #expect(values.count == 2)
+        #expect(values.first!.1 == .remote)
+        #expect(values.last!.1 == .local)
+    }
+
+    @Test(.tags(.fetchStuffPublisher))
+    func shouldErrorIfBothLayersReturnsErrorOrInvalidDataPublisher() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(network, .fetchDataPublisher( request: .any, willReturn: {
+            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((NSData() as Data, URLResponse()))
+            return publisher.eraseToAnyPublisher()
+        }()))
+
+        Given(
+            persistence,
+            .fetchResourcePublisher(
+                .any,
+                willProduce: { stubber in
+                    let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(.stub())
+                    publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))))
+                    stubber.return(publisher.eraseToAnyPublisher())
+                }
+            )
+        )
+
+        try await confirmation(expectedCount: 2) { confirmation in
+            dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
+                .sink { completion in
+                    confirmation()
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure:
+                        confirmation()
+                    }
+                } receiveValue: { values in
+                    Issue.record("Shouldnt receive a value")
+                }
+                .store(in: &cancellables)
+
+            let duration = UInt64(0.3 * 1_000_000_000)
+            try await Task.sleep(nanoseconds: duration)
         }
+    }
+
+    @Test(.tags(.fetchStuff))
+    func shouldErrorIfBothLayersReturnsErrorOrInvalidData() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(network, .fetchData( request: .any, willReturn: {
+            return (NSData() as Data, URLResponse())
+        }()))
+
+        Given(
+            persistence,
+            .fetchResource(
+                .any,
+                willThrow: PersistenceLayerError.persistence(error: NSError.error(withMessage: "Error"))
+            )
+        )
+
+        await #expect(throws: DataProviderError.self) {
+            try await dataProvider.fetchStuff(resource: .dummyProductsAll)
+        }
+    }
+
+    @Test(.tags(.fetchStuffPublisher))
+    func shouldGetPersistedValuesEvenIfParsingStepOnTheNetworkFailsPublisher() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(network, .fetchDataPublisher( request: .any, willReturn: {
+            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((NSData() as Data, URLResponse()))
+            publisher.send(completion: .failure(DataProviderError.fetch(error: NSError.error(withMessage: "Fetch error"))))
+            return publisher.eraseToAnyPublisher()
+        }()))
+
+        Given(
+            persistence,
+            .fetchResourcePublisher(
+                .any,
+                willReturn: {
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
+                    return publisher.eraseToAnyPublisher()
+                }()
+            )
+        )
+
+        try await confirmation(expectedCount: 2) { confirmation in
+            dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
+                .sink { completion in
+                    confirmation()
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure:
+                        Issue.record("Shouldnt receive a failure")
+                    }
+                } receiveValue: { values in
+                    let (value, source) = values
+
+                    switch source {
+                    case .local:
+                        #expect(value.products.count > 0)
+                    case .remote:
+                        #expect(value.products.count > 0)
+                    }
+
+                    confirmation()
+                }
+                .store(in: &cancellables)
+
+            let duration = UInt64(0.3 * 1_000_000_000)
+            try await Task.sleep(nanoseconds: duration)
+        }
+    }
+
+    @Test(.tags(.fetchStuff))
+    func shouldGetPersistedValuesEvenIfParsingStepOnTheNetworkFails() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(network, .fetchData( request: .any, willReturn: {
+            return (NSData() as Data, URLResponse())
+        }()))
+
+        Given(
+            persistence,
+            .fetchResource(
+                .any,
+                willReturn: {
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    return dataContainer
+                }()
+            )
+        )
+
+        let values = try await dataProvider.fetchStuff(resource: .dummyProductsAll)
+        #expect(values.count > 0)
+    }
+
+    @Test(.tags(.fetchStuffPublisher))
+    func shouldGetNetworkValuesIfTheresAnErrorInThePersistenceLayerPublisher() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(network, .fetchDataPublisher( request: .any, willReturn: {
+            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
+
+            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+            var data: Data? = nil
+            do {
+                let jsonData = try JSONEncoder().encode(dataContainer)
+                data = jsonData
+            } catch { }
+
+            if let d = data {
+                publisher.send((d, URLResponse()))
+            } else {
+                publisher.send(completion: .failure(DataProviderError.parsing(error: DataProviderError.unknown)))
+            }
+
+            return publisher.eraseToAnyPublisher()
+        }()))
+
+        Given(
+            persistence,
+            .fetchResourcePublisher(
+                .any,
+                willReturn: {
+                    let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+                    let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
+                    publisher.send(completion: .failure(PersistenceLayerError.persistence(error: NSError.error(withMessage: "Persistence error"))))
+                    return publisher.eraseToAnyPublisher()
+                }()
+            )
+        )
+
+        try await confirmation(expectedCount: 1) { confirmation in
+            dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
+                .sink { completion in
+                    confirmation()
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure:
+                        Issue.record("Shouldnt receive a failure")
+                    }
+                } receiveValue: { values in
+                    #expect(values.0.products.count > 0)
+                    confirmation()
+                }
+                .store(in: &cancellables)
+
+            let duration = UInt64(0.3 * 1_000_000_000)
+            try await Task.sleep(nanoseconds: duration)
+        }
+    }
+
+    @Test(.tags(.fetchStuff))
+    func shouldGetNetworkValuesIfTheresAnErrorInThePersistenceLayer() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(network, .fetchData( request: .any, willReturn: {
+            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+            var data: Data? = nil
+            do {
+                let jsonData = try JSONEncoder().encode(dataContainer)
+                data = jsonData
+            } catch { }
+
+            if let d = data {
+                return (d, URLResponse())
+            } else {
+                return (NSData() as Data, URLResponse())
+            }
+        }()))
+
+        Given(
+            persistence,
+            .fetchResource(
+                .any,
+                willThrow: PersistenceLayerError.persistence(error: NSError.error(withMessage: "Persistence error"))
+            )
+        )
+
+        let values = try await dataProvider.fetchStuff(resource: .dummyProductsAll)
+        #expect(values.count > 0)
+    }
+
+    @Test(.tags(.fetchStuffPublisher))
+    func shouldReceiveValuesFromBothLayersEvenIfEmptyArrayIsReturnedFromThePersistencePublisher() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(network, .fetchDataPublisher( request: .any, willReturn: {
+            let publisher = CurrentValueSubject<(Data, URLResponse), DataProviderError>((Data(), URLResponse()))
+
+            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+            var data: Data? = nil
+            do {
+                let jsonData = try JSONEncoder().encode(dataContainer)
+                data = jsonData
+            } catch { }
+
+            if let d = data {
+                publisher.send((d, URLResponse()))
+            } else {
+                publisher.send(completion: .failure(DataProviderError.parsing(error: DataProviderError.unknown)))
+            }
+
+            return publisher.eraseToAnyPublisher()
+        }()))
+
+        Given(
+            persistence,
+            .fetchResourcePublisher(
+                .any,
+                willReturn: {
+                    let dataContainer = DummyProductDataContainer(total: 0, skip: 0, limit: 0, products: [])
+                    let publisher = CurrentValueSubject<DummyProductDataContainer, PersistenceLayerError>(dataContainer)
+                    return publisher.eraseToAnyPublisher()
+                }()
+            )
+        )
+
+        try await confirmation(expectedCount: 2) { confirmation in
+            dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
+                .sink { completion in
+                    confirmation()
+                    switch completion {
+                    case .finished:
+                        break
+                    case .failure:
+                        Issue.record("Shouldnt receive a failure")
+                    }
+                } receiveValue: { values in
+                    let (value, source) = values
+
+                    switch source {
+                    case .local:
+                        #expect(value.products.count == 0)
+                    case .remote:
+                        #expect(value.products.count > 0)
+                    }
+
+                    confirmation()
+                }
+                .store(in: &cancellables)
+
+            let duration = UInt64(0.3 * 1_000_000_000)
+            try await Task.sleep(nanoseconds: duration)
+        }
+    }
+
+    @Test(.tags(.fetchStuff))
+    func shouldReceiveValuesFromBothLayersEvenIfEmptyArrayIsReturnedFromThePersistence() async throws {
+        Given(network, .buildUrlRequest(resource: .any, willReturn: Resource.dummyProductsAll.buildUrlRequest(apiBaseUrl: URL(string: "https://fake.com")!)))
+        Given(network, .fetchData( request: .any, willReturn: {
+            let dataContainer: DummyProductDataContainer = ReadFile.object(from: "dummyProductTestsBundleOnly", extension: "json", bundle: Bundle(for: DummyProductsListViewTests.self))
+            var data: Data? = nil
+            do {
+                let jsonData = try JSONEncoder().encode(dataContainer)
+                data = jsonData
+            } catch { }
+
+            if let d = data {
+                return (d, URLResponse())
+            } else {
+                return (NSData() as Data, URLResponse())
+            }
+        }()))
+
+        Given(
+            persistence,
+            .fetchResource(
+                .any,
+                willReturn: {
+                    let dataContainer = DummyProductDataContainer(total: 0, skip: 0, limit: 0, products: [])
+                    return dataContainer
+                }()
+            )
+        )
+
+        let values = try await dataProvider.fetchStuff(resource: .dummyProductsAll)
+        #expect(values.count == 2)
+        #expect(values.first!.1 == .remote)
+        #expect(values.first!.0.products.count > 0)
+        #expect(values.last!.1 == .local)
+        #expect(values.last!.0.products.count == 0)
     }
 }
 

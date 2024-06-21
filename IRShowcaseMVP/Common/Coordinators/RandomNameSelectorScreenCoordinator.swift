@@ -10,8 +10,9 @@ import Foundation
 import UIKit
 
 // sourcery: AutoMockable
-protocol RandomNameSelectorScreenRouting {
-    func buildBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView
+@MainActor
+protocol RandomNameSelectorScreenRouting: Sendable {
+    func makeBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView
 }
 
 final class RandomNameSelectorScreenCoordinator: RandomNameSelectorScreenRouting {
@@ -23,7 +24,7 @@ final class RandomNameSelectorScreenCoordinator: RandomNameSelectorScreenRouting
         dataProvider = dp
     }
 
-    func buildBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView {
+    func makeBabyNamePopularityDetails(babyNamePopularity: BabyNamePopularity) -> BabyNamePopularityDetailsView {
         return builders.makeBabyNamePopularityDetails(babyNamePopularity: babyNamePopularity)
     }
 }
