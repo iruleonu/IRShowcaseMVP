@@ -64,7 +64,9 @@ final class DataProviderRemoteOnErrorUseLocalTests {
             )
         )
 
-        try await confirmation(expectedCount: 1) { confirmation in
+        await confirmation(expectedCount: 1) { confirmation in
+            let sleepTask = TestsHelper.sleepTask()
+
             dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
                 .sink { completion in
                     confirmation()
@@ -85,11 +87,11 @@ final class DataProviderRemoteOnErrorUseLocalTests {
                     }
 
                     confirmation()
+                    sleepTask.cancel()
                 }
                 .store(in: &cancellables)
 
-            let duration = UInt64(0.3 * 1_000_000_000)
-            try await Task.sleep(nanoseconds: duration)
+            await sleepTask.value
         }
     }
 
@@ -153,7 +155,10 @@ final class DataProviderRemoteOnErrorUseLocalTests {
             )
         )
 
-        try await confirmation(expectedCount: 2) { confirmation in
+        await confirmation(expectedCount: 2) { confirmation in
+            let sleepTask = TestsHelper.sleepTask()
+
+            var invocationCount = 0
             dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
                 .sink { completion in
                     confirmation()
@@ -162,14 +167,19 @@ final class DataProviderRemoteOnErrorUseLocalTests {
                         break
                     case .failure:
                         confirmation()
+
+                        invocationCount += 1
+                        if (invocationCount >= 2) {
+                            sleepTask.cancel()
+                        }
                     }
                 } receiveValue: { values in
                     Issue.record("Shouldnt receive a value")
                 }
                 .store(in: &cancellables)
 
-            let duration = UInt64(0.3 * 1_000_000_000)
-            try await Task.sleep(nanoseconds: duration)
+            
+            await sleepTask.value
         }
     }
 
@@ -214,7 +224,9 @@ final class DataProviderRemoteOnErrorUseLocalTests {
             )
         )
 
-        try await confirmation(expectedCount: 1) { confirmation in
+        await confirmation(expectedCount: 1) { confirmation in
+            let sleepTask = TestsHelper.sleepTask()
+
             dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
                 .sink { completion in
                     confirmation()
@@ -227,11 +239,11 @@ final class DataProviderRemoteOnErrorUseLocalTests {
                 } receiveValue: { values in
                     #expect(values.0.products.count > 0)
                     confirmation()
+                    sleepTask.cancel()
                 }
                 .store(in: &cancellables)
 
-            let duration = UInt64(0.3 * 1_000_000_000)
-            try await Task.sleep(nanoseconds: duration)
+            await sleepTask.value
         }
     }
 
@@ -292,7 +304,9 @@ final class DataProviderRemoteOnErrorUseLocalTests {
             )
         )
 
-        try await confirmation(expectedCount: 1) { confirmation in
+        await confirmation(expectedCount: 1) { confirmation in
+            let sleepTask = TestsHelper.sleepTask()
+
             dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
                 .sink { completion in
                     confirmation()
@@ -305,11 +319,11 @@ final class DataProviderRemoteOnErrorUseLocalTests {
                 } receiveValue: { values in
                     #expect(values.0.products.count > 0)
                     confirmation()
+                    sleepTask.cancel()
                 }
                 .store(in: &cancellables)
 
-            let duration = UInt64(0.3 * 1_000_000_000)
-            try await Task.sleep(nanoseconds: duration)
+            await sleepTask.value
         }
     }
 
@@ -377,7 +391,9 @@ final class DataProviderRemoteOnErrorUseLocalTests {
             )
         )
 
-        try await confirmation(expectedCount: 1) { confirmation in
+        await confirmation(expectedCount: 1) { confirmation in
+            let sleepTask = TestsHelper.sleepTask()
+
             dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
                 .sink { completion in
                     confirmation()
@@ -399,11 +415,11 @@ final class DataProviderRemoteOnErrorUseLocalTests {
                     }
 
                     confirmation()
+                    sleepTask.cancel()
                 }
                 .store(in: &cancellables)
 
-            let duration = UInt64(0.3 * 1_000_000_000)
-            try await Task.sleep(nanoseconds: duration)
+            await sleepTask.value
         }
     }
 

@@ -54,7 +54,9 @@ final class DataProviderRemoteOnlyTests {
         }()
         ))
 
-        try await confirmation(expectedCount: 1) { confirmation in
+        await confirmation(expectedCount: 1) { confirmation in
+            let sleepTask = TestsHelper.sleepTask()
+
             dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
                 .sink { completion in
                     switch completion {
@@ -66,11 +68,11 @@ final class DataProviderRemoteOnlyTests {
                 } receiveValue: { values in
                     #expect(values.0.products.count > 0)
                     confirmation()
+                    sleepTask.cancel()
                 }
                 .store(in: &cancellables)
 
-            let duration = UInt64(0.3 * 1_000_000_000)
-            try await Task.sleep(nanoseconds: duration)
+            await sleepTask.value
         }
     }
 
@@ -113,7 +115,9 @@ final class DataProviderRemoteOnlyTests {
         }()
         ))
 
-        try await confirmation(expectedCount: 1) { confirmation in
+        await confirmation(expectedCount: 1) { confirmation in
+            let sleepTask = TestsHelper.sleepTask()
+
             dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
                 .sink { completion in
                     switch completion {
@@ -122,14 +126,14 @@ final class DataProviderRemoteOnlyTests {
                     case .failure(let error):
                         #expect(error.errorDescription == DataProviderError.parsing(error: DataProviderError.unknown).errorDescription)
                         confirmation()
+                        sleepTask.cancel()
                     }
                 } receiveValue: { values in
                     Issue.record("Shouldnt receive a value with invalid data")
                 }
                 .store(in: &cancellables)
 
-            let duration = UInt64(0.3 * 1_000_000_000)
-            try await Task.sleep(nanoseconds: duration)
+            await sleepTask.value
         }
     }
 
