@@ -280,6 +280,19 @@ class Helpers {
         .sorted()
         .joined(separator: " ")
     }
+    static func extractAllAttributesStuff(
+        from attributes: [String: [SourceryRuntime.Attribute]],
+        filterOutStartingWith disallowedPrefixes: [String] = []
+    ) -> String {
+        return attributes
+        .reduce([SourceryRuntime.Attribute]()) { $0 + $1.1 }
+        .map { $0.description }
+        .filter { element in
+            !disallowedPrefixes.contains(where: element.hasPrefix)
+        }
+        .sorted()
+        .joined(separator: " ")
+    }
 }
 class ParameterWrapper {
     let parameter: MethodParameter
@@ -1629,11 +1642,13 @@ _%>
     let allStaticMethods = uniques(methods: aProtocol.allMethods.filter({ $0.isStatic && !$0.isInitializer }))
     let allStaticMethodsForMethodType = uniquesWithoutGenericConstraints(methods: aProtocol.allMethods.filter({ $0.isStatic }))
     let conformsToStaticMock = !allStaticMethods.isEmpty || !allStaticVariables.isEmpty
+    let allAttributesStuff: String = Helpers.extractAllAttributesStuff(from: type.attributes)
+    let allAttributesContainsMainActor = allAttributesStuff.contains("@MainActor")
     let conformsToMock = !allMethods.isEmpty || !allVariables.isEmpty -%><%_ -%><%_ -%>
 <%_ if autoMockable { -%>
 // MARK: - <%= type.name %>
 <%= attributes %>
-<%= accessModifier %> class <%= type.name %><%= mockTypeName %><%= genericTypesModifier %>:<%= inheritFromNSObject ? " NSObject," : "" %> <%= type.name %>, Mock<%= conformsToStaticMock ? ", StaticMock" : "" %><%= genericTypesConstraints %> {
+<%= accessModifier %> class <%= type.name %><%= mockTypeName %><%= genericTypesModifier %>:<%= inheritFromNSObject ? " NSObject," : "" %> <%= type.name %>, <%= allAttributesContainsMainActor ? "@preconcurrency" : "" %> Mock<%= conformsToStaticMock ? ", StaticMock" : "" %><%= !allAttributesContainsMainActor ? ", @unchecked Sendable" : "" %><%= genericTypesConstraints %> {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
