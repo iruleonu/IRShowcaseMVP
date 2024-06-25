@@ -77,7 +77,6 @@ struct DataProviderLocalOnlyTests {
             )
         )
 
-        // Async
         let values = try await localDataProvider.fetchStuff(resource: .dummyProductsAll)
         #expect(values.count > 0)
     }
@@ -131,7 +130,6 @@ struct DataProviderLocalOnlyTests {
             )
         )
 
-        // Async
         await #expect(throws: DataProviderError.self) {
             try await localDataProvider.fetchStuff(resource: .dummyProductsAll)
         }

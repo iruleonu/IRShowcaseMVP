@@ -162,18 +162,7 @@ final class DataProviderRemoteThenLocalTests {
         )
 
         await confirmation(expectedCount: 2) { confirmation in
-            let sleepTask:Task<Void, Never> = .init {
-                let sleep:Task<Void, Never> = .init {
-                    let duration = UInt64(1.0 * 1_000_000_000)
-                    try? await Task.sleep(nanoseconds: duration)
-                }
-                await withTaskCancellationHandler {
-                    @Sendable () -> () in await sleep.value
-                }
-                onCancel: {
-                    sleep.cancel()
-                }
-            }
+            let sleepTask = TestsHelper.sleepTask()
 
             var invocationCount = 0
             dataProvider.fetchStuffPublisher(resource: .dummyProductsAll)
