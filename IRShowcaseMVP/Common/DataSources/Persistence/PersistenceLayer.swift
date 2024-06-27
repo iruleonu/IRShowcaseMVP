@@ -74,6 +74,13 @@ extension PersistenceLayerImpl: PersistenceLayerLoad {
                 throw PersistenceLayerError.casting
             }
             return casted
+        case .babyNamePopularities:
+            let fileName = PersistenceLayerImpl.fileNameForResource(resource)
+            let savedFile: BabyNamePopularityDataContainer = ReadFile.object(from: fileName, extension: "json")
+            guard let casted = savedFile as? T else {
+                throw PersistenceLayerError.casting
+            }
+            return casted
         default:
             throw PersistenceLayerError.notImplemented
         }
@@ -133,7 +140,7 @@ private extension PersistenceLayerImpl {
     static func fileNameForResource(_ resource: Resource) -> String {
         switch resource {
         case .babyNamePopularities:
-            return String(describing: type(of: BabyNamePopularityDataContainer.self)) + resource.rawValue
+            return "babyNamePopularities"
         case .dummyProducts:
             fallthrough
         case .dummyProductsAll:

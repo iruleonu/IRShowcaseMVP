@@ -16,7 +16,10 @@ protocol RootRouting {
 
 final class RootCoordinator: RootRouting {
     private enum LaunchFlow {
-        case mainScreen
+        case productsListThatFetchsAllProductsInOneRequest
+        case productsListThatFetchsAllProductsInOneRequestOnAHybridDataProvider
+        case productsListWithPagination
+        case productsListWithPaginationOnAHybridDataProvider
         case popularBabyNames
     }
     
@@ -30,17 +33,29 @@ final class RootCoordinator: RootRouting {
 
     @MainActor 
     func start() {
-        handleLaunchFlow(.mainScreen)
+        handleLaunchFlow(.productsListThatFetchsAllProductsInOneRequest)
     }
 
-    @MainActor 
-    func launchMainScreen() {
+    @MainActor
+    func launchProductsListThatFetchsAllProductsInOneRequest() {
         window.rootViewController = builders.makeMainScreen()
-        //window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProvider()
-        //window.rootViewController = builders.makeDummyProductsListScreenOnAPaginatedModel()
-        //window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProviderOnAPaginatedModel()
     }
-    
+
+    @MainActor
+    func launchProductsListThatFetchsAllProductsInOneRequestOnAHybridDataProvider() {
+        window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProvider()
+    }
+
+    @MainActor
+    func launchProductsListWithPagination() {
+        window.rootViewController = builders.makeDummyProductsListScreenOnAPaginatedModel()
+    }
+
+    @MainActor
+    func launchProductsListWithPaginationOnAHybridDataProvider() {
+        window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProviderOnAPaginatedModel()
+    }
+
     @MainActor 
     func launchPopularBabyNamesScreen() {
         window.rootViewController = builders.makePopularBabyNamesScreen()
@@ -49,8 +64,14 @@ final class RootCoordinator: RootRouting {
     @MainActor 
     private func handleLaunchFlow(_ launchFlow: LaunchFlow) {
         switch launchFlow {
-        case .mainScreen:
-            launchMainScreen()
+        case .productsListThatFetchsAllProductsInOneRequest:
+            launchProductsListThatFetchsAllProductsInOneRequest()
+        case .productsListThatFetchsAllProductsInOneRequestOnAHybridDataProvider:
+            launchProductsListThatFetchsAllProductsInOneRequestOnAHybridDataProvider()
+        case .productsListWithPagination:
+            launchProductsListWithPagination()
+        case .productsListWithPaginationOnAHybridDataProvider:
+            launchProductsListWithPaginationOnAHybridDataProvider()
         case .popularBabyNames:
             launchPopularBabyNamesScreen()
         }

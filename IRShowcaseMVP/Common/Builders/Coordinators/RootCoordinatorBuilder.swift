@@ -13,8 +13,11 @@ import Combine
 
 @MainActor 
 protocol RootCoordinatorChildBuilders {
-    // Shows a dummy product list screen with a viewModel that firstly fetchs all the products and then sends them to the view
+    // Shows the main screens (forwards the call to makeDummyProductsListThatFetchsAllProductsInOneRequest())
     func makeMainScreen() -> UIViewController
+
+    // Shows a dummy product list screen with a viewModel that firstly fetchs all the products and then sends them to the view
+    func makeDummyProductsListThatFetchsAllProductsInOneRequest() -> UIViewController
 
     // Shows a dummy product list screen with a viewModel that firstly fetchs all the products and then sends them to the view using a hybrid/unified data provider
     func makeDummyProductsListScreenInjectingHybridDataProvider() -> UIViewController
@@ -34,10 +37,17 @@ struct RootCoordinatorBuilder: RootCoordinatorChildBuilders {
         return RootCoordinator(window: window, builders: self)
     }
 
+    /// Method that forwards a call to the available screens as the default/main screen.
+    /// - Note: Right now it returns the same as makeDummyProductsListScreenInjectingHybridDataProvider()
+    /// - Returns: UIViewController to be used on the rootViewController
+    func makeMainScreen() -> UIViewController {
+        return makeDummyProductsListScreenInjectingHybridDataProvider()
+    }
+
     /// Shows a product list screen with a viewModel that firstly fetchs all the products and then sends them to the view
     /// - Note: Also serves as an example on how to inject the PersistenceLayer and the APIService
     /// - Returns: UIViewController to be used on the rootViewController
-    func makeMainScreen() -> UIViewController {
+    func makeDummyProductsListThatFetchsAllProductsInOneRequest() -> UIViewController {
         let view = DummyProductsScreenBuilder().make(
             localDataProvider: PersistenceLayerBuilder.make(),
             remoteDataProvider: APIServiceBuilder.make()
@@ -94,7 +104,7 @@ struct RootCoordinatorBuilder: RootCoordinatorChildBuilders {
         let network = APIServiceBuilder.make()
         let persistence = PersistenceLayerBuilder.make()
         let dataProvider: DataProvider<BabyNamePopularityDataContainer> = DataProviderBuilder.makeDataProvider(
-            config: .localOnly,
+            config: .remoteOnErrorUseLocal,
             network: network,
             persistence: persistence
         )
