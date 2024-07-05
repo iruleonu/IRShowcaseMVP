@@ -1,8 +1,11 @@
 [![ios with xcode 15](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml/badge.svg)](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml)
 
-# Showcase using SwiftUI + Combine
+# Showcase using SwiftUI + Combine + Async
 
-Follows the same project structure as [IRShowcase](https://github.com/iruleonu/IRShowcase). 
+Follows the same project structure as [IRShowcase](https://github.com/iruleonu/IRShowcase).
+
+# Requirements
+You need to run install 'brew install sourcery' to generate the Mocks
 
 ## Uses
 
@@ -11,7 +14,8 @@ Follows the same project structure as [IRShowcase](https://github.com/iruleonu/I
 * Combine
 
 ## Architecture layers naming
-You can look at the ViewModel as the Interactor and the ObservableObject within the ViewModel as the Presenter. The view in SwiftUI sends actions to the ViewModel (the Interactor layer) and reads the State from the ObservableObject within the ViewModel (the Presenter layer)
+You can look at the ViewModel as the Interactor and the ObservableObject within the ViewModel as the Presenter.
+The view in SwiftUI sends actions to the ViewModel (the Interactor layer) and reads the State from the ObservableObject within the ViewModel (the Presenter layer).
 
 ## Misc
 * It has a ObservableObject that's going to be connected to the SwiftUI view as a @ObservedObject, essentially serving as a State. The viewModel has the logic.
