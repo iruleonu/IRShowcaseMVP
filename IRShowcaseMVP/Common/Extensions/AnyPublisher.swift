@@ -12,7 +12,15 @@ enum AnyPublisherAsyncError: Error {
     case finishedWithoutValue
 }
 
+@globalActor
+struct AnyPublisherCombineToAsyncActor {
+    actor AnyPublisherCombineToAsyncActorType { }
+
+    static let shared: AnyPublisherCombineToAsyncActorType = AnyPublisherCombineToAsyncActorType()
+}
+
 extension AnyPublisher {
+    @AnyPublisherCombineToAsyncActor
     func async() async throws -> Output {
         try await withCheckedThrowingContinuation { continuation in
             var cancellable: AnyCancellable?
@@ -29,8 +37,11 @@ extension AnyPublisher {
                     }
                     cancellable?.cancel()
                 } receiveValue: { value in
-                    finishedWithoutValue = false
-                    continuation.resume(with: .success(value))
+                    Task {
+                        finishedWithoutValue = false
+                        continuation.resume(returning: value)
+                        cancellable?.cancel()
+                    }
                 }
         }
     }

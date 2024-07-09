@@ -79,7 +79,7 @@ extension RandomNameSelectorViewModelImpl {
 }
 
 private extension RandomNameSelectorViewModelImpl {
-    @MainActor
+    @DataProviderActor
     private func fetchPopularBabyNames() async {
         let fetchResult: Result<BabyNamePopularityDataContainer, Error>
         do {

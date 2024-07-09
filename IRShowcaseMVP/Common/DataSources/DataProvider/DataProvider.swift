@@ -23,6 +23,13 @@ enum DataProviderFetchType {
     case remote
 }
 
+@globalActor
+struct DataProviderActor {
+    actor DataProviderActorType { }
+
+    static let shared: DataProviderActorType = DataProviderActorType()
+}
+
 // sourcery: AutoMockable
 // sourcery: associatedtype = "TP: Codable & Sendable"
 protocol DataProviderCombineProtocol {

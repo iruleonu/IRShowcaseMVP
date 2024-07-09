@@ -10,5 +10,6 @@ import Foundation
 
 // sourcery: AutoMockable
 protocol FetchBabyNamePopularitiesProtocol {
+    @DataProviderActor
     func fetchBabyNamePopularities() async throws -> BabyNamePopularityDataContainer
 }
