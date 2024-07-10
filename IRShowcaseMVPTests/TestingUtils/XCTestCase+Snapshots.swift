@@ -14,7 +14,7 @@ import SnapshotTesting
 
 extension XCTestCase {
     /// Take snapshots in several devices. Recommended for full screen views to validate it looks fine in multiple devices.
-    func cwSnapshotOnDevices<Content>(
+    func helperSnapshotOnDevices<Content>(
         view: Content,
         wait: TimeInterval = 0,
         testName: String = #function,
@@ -45,7 +45,7 @@ extension XCTestCase {
         )
     }
 
-    func cwSnapshotOnMax<Content>(
+    func helperSnapshotOnMax<Content>(
         view: Content,
         wait: TimeInterval = 0,
         testName: String = #function,
@@ -61,7 +61,7 @@ extension XCTestCase {
         )
     }
 
-    func cwSnapshotScrollView<Content>(
+    func helperSnapshotScrollView<Content>(
         view: Content,
         height: CGFloat = 1000,
         testName: String = #function,
@@ -95,14 +95,14 @@ extension XCTestCase {
     }
 
     /// Take a snapshot at the size of the view. Recommended for isolated UI components like a Button.
-    func cwSnapshot<Content>(
+    func helperSnapshot<Content>(
         view: Content,
         wait: TimeInterval = 0,
         testName: String = #function,
         file: StaticString = #file
     ) where Content: View {
         assertSnapshot(
-            matching: UIHostingController(rootView: view).rootView,
+            of: UIHostingController(rootView: view).rootView,
             as: .wait(for: wait, on: .image),
             file: file,
             testName: testName

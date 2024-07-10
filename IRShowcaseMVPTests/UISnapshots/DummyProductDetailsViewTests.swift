@@ -26,7 +26,7 @@ final class DummyProductDetailsViewTests: TestCase {
         )
 
         // Then
-        cwSnapshotOnDevices(view: view)
+        helperSnapshotOnDevices(view: view)
     }
 }
 

@@ -12,7 +12,11 @@ import SnapshotTesting
 
 class TestCase: XCTestCase {
     override func setUp() {
-        super.setUp()
-        SnapshotTesting.isRecording = false
+        withSnapshotTesting(
+            record: SnapshotTestingConfiguration.Record.never,
+            diffTool: SnapshotTestingConfiguration.DiffTool.default
+        ) {
+            super.setUp()
+        }
     }
 }

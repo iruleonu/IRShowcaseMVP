@@ -25,7 +25,7 @@ final class DummyProductsListViewTests: TestCase {
         )
 
         // Then
-        cwSnapshotOnDevices(view: view)
+        helperSnapshotOnDevices(view: view)
     }
 
     @MainActor
@@ -40,7 +40,7 @@ final class DummyProductsListViewTests: TestCase {
         )
 
         // Then
-        cwSnapshotOnDevices(view: view)
+        helperSnapshotOnDevices(view: view)
     }
 
     @MainActor
@@ -53,7 +53,7 @@ final class DummyProductsListViewTests: TestCase {
         )
 
         // Then
-        cwSnapshotOnDevices(view: view)
+        helperSnapshotOnDevices(view: view)
     }
 }
 

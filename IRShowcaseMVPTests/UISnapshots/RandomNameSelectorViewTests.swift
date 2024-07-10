@@ -25,7 +25,7 @@ final class RandomNameSelectorViewTests: TestCase {
         )
 
         // Then
-        cwSnapshotOnDevices(view: view)
+        helperSnapshotOnDevices(view: view)
     }
 
     @MainActor
@@ -38,7 +38,7 @@ final class RandomNameSelectorViewTests: TestCase {
         )
 
         // Then
-        cwSnapshotOnDevices(view: view)
+        helperSnapshotOnDevices(view: view)
     }
 
     @MainActor
@@ -51,7 +51,7 @@ final class RandomNameSelectorViewTests: TestCase {
         )
 
         // Then
-        cwSnapshotOnDevices(view: view)
+        helperSnapshotOnDevices(view: view)
     }
 }
 
@@ -97,7 +97,7 @@ private extension RandomNameSelectorViewObservableObject {
     static func stub(selectFirstName: Bool = false, showErrorView: Bool = false) -> RandomNameSelectorViewObservableObject {
         let vm = RandomNameSelectorViewObservableObject()
 
-        let babyNamePopularitiesDataContainer: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
+        let babyNamePopularitiesDataContainer: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json", bundle: Bundle(for: RandomNameSelectorViewTests.self))
         let orderedSet = OrderedSet(babyNamePopularitiesDataContainer.babyNamePopularityRepresentation)
         vm.babyNamePopularities = Array(orderedSet)
 
