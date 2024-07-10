@@ -23,114 +23,126 @@ final class RandomNameSelectorViewModelTests: TestCase {
         cancellables = Set<AnyCancellable>()
     }
 
-    @MainActor
-    func testDataGetsSetOnTheHappyPath() {
+    func testDataGetsSetOnTheHappyPath() async {
         let expectation = self.expectation(description: "Expected to get data on success response")
-        defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
-
-        let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
-        let routingMock = RandomNameSelectorScreenRoutingMock()
-        subject = RandomNameSelectorViewModelImpl(
-            routing: routingMock,
-            dataProvider: dataProviderMock
-        )
-
-        Given(
-            dataProviderMock,
-            .fetchBabyNamePopularities(willProduce: { stubber in
-                let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                stubber.return(babyNamePopularities)
-            })
-        )
-
-        subject.onAppear()
         
-        subject
-            .observableObject
-            .$babyNamePopularities
-            .dropFirst()
-            .sink { array in
-                XCTAssert(array.count > 0)
-                expectation.fulfill()
+        Task { @MainActor in
+            let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
+            let routingMock = RandomNameSelectorScreenRoutingMock()
+            self.subject = RandomNameSelectorViewModelImpl(
+                routing: routingMock,
+                dataProvider: dataProviderMock
+            )
+            
+            Task { @DataProviderActor in
+                Given(
+                    dataProviderMock,
+                    .fetchBabyNamePopularities(willProduce: { stubber in
+                        let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json", bundle: Bundle(for: RandomNameSelectorViewModelTests.self))
+                        stubber.return(babyNamePopularities)
+                    })
+                )
             }
-            .store(in: &cancellables)
+            
+            self.subject.onAppear()
+            
+            self.subject
+                .observableObject
+                .$babyNamePopularities
+                .dropFirst()
+                .sink { array in
+                    XCTAssert(array.count > 0)
+                    expectation.fulfill()
+                }
+                .store(in: &self.cancellables)
+        }
+        
+        await fulfillment(of: [expectation], timeout: 1.0)
     }
 
-    @MainActor
-    func testShowErrorViewBooleanIsTrueOnError() {
+    func testShowErrorViewBooleanIsTrueOnError() async {
         let expectation = self.expectation(description: "Expected to the showErrorView boolean to be true on fetch error")
-        defer { self.waitForExpectations(timeout: 1.0, handler: nil) }
-
-        let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
-        let routingMock = RandomNameSelectorScreenRoutingMock()
-        let subject = RandomNameSelectorViewModelImpl(
-            routing: routingMock,
-            dataProvider: dataProviderMock
-        )
-
-        Given(
-            dataProviderMock,
-            .fetchBabyNamePopularities(willThrow: DataProviderError.noConnectivity)
-        )
-
-        XCTAssert(subject.observableObject.showErrorView == false)
-
-        subject.onAppear()
-
-        subject
-            .observableObject
-            .$showErrorView
-            .dropFirst()
-            .sink { showErrorView in
-                XCTAssertTrue(showErrorView)
-                expectation.fulfill()
+        
+        Task { @MainActor in
+            let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
+            let routingMock = RandomNameSelectorScreenRoutingMock()
+            self.subject = RandomNameSelectorViewModelImpl(
+                routing: routingMock,
+                dataProvider: dataProviderMock
+            )
+            
+            Task { @DataProviderActor in
+                Given(
+                    dataProviderMock,
+                    .fetchBabyNamePopularities(willThrow: DataProviderError.noConnectivity)
+                )
             }
-            .store(in: &cancellables)
+
+            XCTAssert(self.subject.observableObject.showErrorView == false)
+
+            self.subject.onAppear()
+
+            self.subject
+                .observableObject
+                .$showErrorView
+                .dropFirst()
+                .sink { showErrorView in
+                    XCTAssertTrue(showErrorView)
+                    expectation.fulfill()
+                }
+                .store(in: &self.cancellables)
+        }
+        
+        await fulfillment(of: [expectation], timeout: 1.0)
     }
-
-    @MainActor
-    func testButtonTapsSelectsCorrectGender() {
+    
+    func testButtonTapsSelectsCorrectGender() async {
         let expectation = self.expectation(description: "Expected the selected baby name to have the last button tapped gender")
-        defer { self.waitForExpectations(timeout: 10.0, handler: nil) }
 
-        let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
-        let routingMock = RandomNameSelectorScreenRoutingMock()
-        subject = RandomNameSelectorViewModelImpl(
-            routing: routingMock,
-            dataProvider: dataProviderMock
-        )
-
-        Given(
-            dataProviderMock,
-            .fetchBabyNamePopularities(willProduce: { stubber in
-                let babyNamePopularities: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json")
-                stubber.return(babyNamePopularities)
-            })
-        )
-
-        subject.onAppear()
-
-        subject
-            .observableObject
-            .$babyNamePopularities
-            .receive(on: DispatchQueue.main)
-            .dropFirst()
-            .sink { _ in
-                self.subject.onFemaleButtonTap()
-                self.subject.onRandomButtonTap()
+        Task { @MainActor in
+            let dataProviderMock = FetchBabyNamePopularitiesProtocolMock()
+            let routingMock = RandomNameSelectorScreenRoutingMock()
+            self.subject = RandomNameSelectorViewModelImpl(
+                routing: routingMock,
+                dataProvider: dataProviderMock
+            )
+            
+            Task { @DataProviderActor in
+                Given(
+                    dataProviderMock,
+                    .fetchBabyNamePopularities(willReturn: {
+                        let babyNamePopularitiesDataContainer: BabyNamePopularityDataContainer = ReadFile.object(from: "babyNamePopularities", extension: "json", bundle: Bundle(for: RandomNameSelectorViewModelTests.self))
+                        return babyNamePopularitiesDataContainer
+                    }())
+                )
             }
-            .store(in: &cancellables)
 
-        subject
-            .observableObject
-            .$selectedBabyNamePopularity
-            .receive(on: DispatchQueue.main)
-            .dropFirst()
-            .sink { selectedBabyNamePopularity in
-                XCTAssertNotNil(selectedBabyNamePopularity)
-                XCTAssertTrue(selectedBabyNamePopularity!.gender == .female)
-                expectation.fulfill()
-            }
-            .store(in: &cancellables)
+            self.subject.onAppear()
+
+            self.subject
+                .observableObject
+                .$babyNamePopularities
+                .receive(on: DispatchQueue.main)
+                .dropFirst()
+                .sink { showErrorView in
+                    self.subject.onFemaleButtonTap()
+                    self.subject.onRandomButtonTap()
+                }
+                .store(in: &self.cancellables)
+            
+            self.subject
+                .observableObject
+                .$selectedBabyNamePopularity
+                .receive(on: DispatchQueue.main)
+                .dropFirst()
+                .sink { selectedBabyNamePopularity in
+                    XCTAssertNotNil(selectedBabyNamePopularity)
+                    XCTAssertTrue(selectedBabyNamePopularity!.gender == .female)
+                    expectation.fulfill()
+                }
+                .store(in: &self.cancellables)
+        }
+        
+        await fulfillment(of: [expectation], timeout: 10.0)
     }
 }
