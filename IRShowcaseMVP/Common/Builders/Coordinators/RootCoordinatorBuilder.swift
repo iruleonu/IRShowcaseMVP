@@ -33,8 +33,15 @@ protocol RootCoordinatorChildBuilders {
 }
 
 struct RootCoordinatorBuilder: RootCoordinatorChildBuilders {
-    func make(window: UIWindow) -> RootCoordinator {
-        return RootCoordinator(window: window, builders: self)
+    func make(
+        window: UIWindow,
+        launchFlow: RootCoordinator.LaunchFlow
+    ) -> RootCoordinator {
+        return RootCoordinator(
+            window: window,
+            builders: self,
+            launchFlow: launchFlow
+        )
     }
 
     /// Method that forwards a call to the available screens as the default/main screen.

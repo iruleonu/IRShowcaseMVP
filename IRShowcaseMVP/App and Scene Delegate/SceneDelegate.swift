@@ -26,8 +26,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             .first(where: { $0.activityType == NSUserActivityTypeBrowsingWeb })?
             .webpageURL ?? connectionOptions.urlContexts.map({ $0.url }).first
 
+        let launchFlow: RootCoordinator.LaunchFlow = .productsListThatFetchsAllProductsInOneRequest
+        // let launchFlow: RootCoordinator.LaunchFlow = .productsListThatFetchsAllProductsInOneRequestOnAHybridDataProvider
+        // let launchFlow: RootCoordinator.LaunchFlow = .productsListWithPagination
+        // let launchFlow: RootCoordinator.LaunchFlow = .productsListWithPaginationOnAHybridDataProvider
+        // let launchFlow: RootCoordinator.LaunchFlow = .popularBabyNames
+
         initializeAppCoordinatorAndWindow(
             windowScene: windowScene,
+            launchFlow: launchFlow,
             handleDeepLink: { [weak self] in
                 guard let url = deepLinkUrl else { return }
                 // Handle launch deep link after splash screen:
@@ -38,10 +45,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 }
 
 private extension SceneDelegate {
-    func initializeAppCoordinatorAndWindow(windowScene: UIWindowScene, handleDeepLink: @escaping () -> Void) {
+    func initializeAppCoordinatorAndWindow(
+        windowScene: UIWindowScene,
+        launchFlow: RootCoordinator.LaunchFlow,
+        handleDeepLink: @escaping () -> Void
+    ) {
         let window = UIWindow(windowScene: windowScene)
         window.makeKeyAndVisible()
-        self.rootCoordinator = RootCoordinatorBuilder().make(window: window)
+        self.rootCoordinator = RootCoordinatorBuilder().make(
+            window: window,
+            launchFlow: launchFlow
+        )
         self.rootCoordinator?.start()
     }
 

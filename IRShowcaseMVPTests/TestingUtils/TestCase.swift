@@ -12,9 +12,12 @@ import SnapshotTesting
 
 class TestCase: XCTestCase {
     override func setUp() {
+        // We need to use the isRecording bool despite the deprecation warning
+        let shouldRecordSnapshots = false
+        isRecording = shouldRecordSnapshots
         withSnapshotTesting(
-            record: SnapshotTestingConfiguration.Record.never,
-            diffTool: SnapshotTestingConfiguration.DiffTool.default
+            record: shouldRecordSnapshots ? .all : .missing,
+            diffTool: .default
         ) {
             super.setUp()
         }

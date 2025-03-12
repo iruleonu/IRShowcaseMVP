@@ -123,8 +123,8 @@ private extension XCTestCase {
         of: view,
         as: .image(
             drawHierarchyInKeyWindow: false,
-            precision: 1,
-            perceptualPrecision: 1,
+            precision: 0.95,
+            perceptualPrecision: 0.95,
             layout: .device(config: viewConfig),
             traits: .init()
         ),

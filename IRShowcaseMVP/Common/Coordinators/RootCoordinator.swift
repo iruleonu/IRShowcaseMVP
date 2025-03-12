@@ -15,7 +15,7 @@ protocol RootRouting {
 }
 
 final class RootCoordinator: RootRouting {
-    private enum LaunchFlow {
+    enum LaunchFlow {
         case productsListThatFetchsAllProductsInOneRequest
         case productsListThatFetchsAllProductsInOneRequestOnAHybridDataProvider
         case productsListWithPagination
@@ -25,44 +25,27 @@ final class RootCoordinator: RootRouting {
     
     private var window: UIWindow
     private let builders: RootCoordinatorChildBuilders
+    private let launchFlow: LaunchFlow
 
-    init(window w: UIWindow, builders b: RootCoordinatorChildBuilders) {
+    init(
+        window w: UIWindow,
+        builders b: RootCoordinatorChildBuilders,
+        launchFlow lf: LaunchFlow
+    ) {
         window = w
         builders = b
+        launchFlow = lf
     }
 
     @MainActor 
     func start() {
-        handleLaunchFlow(.productsListThatFetchsAllProductsInOneRequest)
+        handleLaunchFlow(launchFlow)
     }
+}
 
-    @MainActor
-    func launchProductsListThatFetchsAllProductsInOneRequest() {
-        window.rootViewController = builders.makeMainScreen()
-    }
-
-    @MainActor
-    func launchProductsListThatFetchsAllProductsInOneRequestOnAHybridDataProvider() {
-        window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProvider()
-    }
-
-    @MainActor
-    func launchProductsListWithPagination() {
-        window.rootViewController = builders.makeDummyProductsListScreenOnAPaginatedModel()
-    }
-
-    @MainActor
-    func launchProductsListWithPaginationOnAHybridDataProvider() {
-        window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProviderOnAPaginatedModel()
-    }
-
-    @MainActor 
-    func launchPopularBabyNamesScreen() {
-        window.rootViewController = builders.makePopularBabyNamesScreen()
-    }
-    
-    @MainActor 
-    private func handleLaunchFlow(_ launchFlow: LaunchFlow) {
+@MainActor
+private extension RootCoordinator {
+    func handleLaunchFlow(_ launchFlow: LaunchFlow) {
         switch launchFlow {
         case .productsListThatFetchsAllProductsInOneRequest:
             launchProductsListThatFetchsAllProductsInOneRequest()
@@ -75,5 +58,25 @@ final class RootCoordinator: RootRouting {
         case .popularBabyNames:
             launchPopularBabyNamesScreen()
         }
+    }
+
+    private func launchProductsListThatFetchsAllProductsInOneRequest() {
+        window.rootViewController = builders.makeMainScreen()
+    }
+
+    private func launchProductsListThatFetchsAllProductsInOneRequestOnAHybridDataProvider() {
+        window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProvider()
+    }
+
+    private func launchProductsListWithPagination() {
+        window.rootViewController = builders.makeDummyProductsListScreenOnAPaginatedModel()
+    }
+
+    private func launchProductsListWithPaginationOnAHybridDataProvider() {
+        window.rootViewController = builders.makeDummyProductsListScreenInjectingHybridDataProviderOnAPaginatedModel()
+    }
+
+    private func launchPopularBabyNamesScreen() {
+        window.rootViewController = builders.makePopularBabyNamesScreen()
     }
 }
