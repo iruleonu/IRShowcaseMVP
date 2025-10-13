@@ -34,8 +34,8 @@ jobs:
           tools: sourcery xcbeautify
       - name: Generate mocks as the generated file it's included in the gitignore
         run: find . -name 'mocky.yml' -exec $(brew --prefix sourcery)/bin/sourcery --config {} \;    
-      - name: Set Xcode 15.4.0
-        run: sudo xcode-select -s /Applications/Xcode_15.4.0.app/Contents/Developer
+      #- name: Set Xcode 15.4.0
+      #  run: sudo xcode-select -s /Applications/Xcode_15.4.0.app/Contents/Developer
       - name: Set Scheme
         run: |
           default=IRShowcaseMVP
@@ -94,8 +94,8 @@ jobs:
           tools: sourcery xcbeautify
       - name: Generate mocks as the generated file it's included in the gitignore
         run: find . -name 'mocky.yml' -exec $(brew --prefix sourcery)/bin/sourcery --config {} \;    
-      - name: Set Xcode 15.4.0
-        run: sudo xcode-select -s /Applications/Xcode_15.4.0.app/Contents/Developer
+      #- name: Set Xcode 15.4.0
+      #  run: sudo xcode-select -s /Applications/Xcode_15.4.0.app/Contents/Developer
       - name: Set Scheme
         run: |
           default=IRShowcaseMVP
