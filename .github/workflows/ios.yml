@@ -36,11 +36,12 @@ jobs:
         run: find . -name 'mocky.yml' -exec $(brew --prefix sourcery)/bin/sourcery --config {} \;    
       - name: Set Xcode 16.3.0
         run: sudo xcode-select -s /Applications/Xcode_16.3.0.app/Contents/Developer
-      - name: Set Scheme
+      - name: Set default Scheme
         run: |
-          default=IRShowcaseMVP
+          scheme_list=$(xcodebuild -list -json | tr -d "\n")
+          default=$(echo $scheme_list | ruby -e "require 'json'; puts JSON.parse(STDIN.gets)['project']['targets'][0]")
           echo $default | cat >default
-          echo Using scheme: $default
+          echo Using default scheme: $default
       - name: Find and boot the iPhone 16
         run: |
           # Using xcrun to find the list of devices
