@@ -1,4 +1,4 @@
-[![ios with xcode 15](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml/badge.svg)](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml)
+[![ios with xcode 16.3](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml/badge.svg)](https://github.com/iruleonu/IRShowcaseMVP/actions/workflows/ios.yml)
 
 # Showcase using SwiftUI + Combine
 
