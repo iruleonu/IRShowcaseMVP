@@ -5,7 +5,19 @@ on:
     branches: [ "main", "develop" ]
   pull_request:
     branches: [ "develop" ]
-
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
 jobs:
   build:
     name: Build and Test
@@ -68,12 +80,6 @@ jobs:
           if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
           file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
           set -o pipefail && xcodebuild test-without-building -scheme "$scheme" -"$filetype_parameter" "$file_to_build" -destination "platform=$platform,id=$deviceUUID" | xcbeautify --renderer github-actions
-
-on:
-   schedule:
-     - cron: "0 0 * * *"
-
-jobs:
   test_schedule:
     name: Daily build. Build and Test default scheme using any available iPhone simulator
     runs-on: macos-latest
