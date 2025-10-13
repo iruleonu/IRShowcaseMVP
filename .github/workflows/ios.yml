@@ -41,13 +41,13 @@ jobs:
           default=IRShowcaseMVP
           echo $default | cat >default
           echo Using scheme: $default
-      - name: Find and boot the iPhone 15
+      - name: Find and boot the iPhone 16
         run: |
           # Using xcrun to find the list of devices
           # Choose first device available on the host
           #device=`xcrun xctrace list devices 2>&1 | grep -oE 'iPhone.*?[^\(]+' | head -1 | awk '{$1=$1;print}' | sed -e "s/ Simulator$//"`
-          device='iPhone 15'
-          deviceUUID=$(xcrun xctrace list devices 2>&1 | grep -o "iPhone 15 Simulator [^&]*" | head -1 | awk '{print $5}' | tr -d "()")
+          device='iPhone 16'
+          deviceUUID=$(xcrun xctrace list devices 2>&1 | grep -o "iPhone 16 Simulator [^&]*" | head -1 | awk '{print $5}' | tr -d "()")
           echo $deviceUUID | cat >deviceUUID
           echo Setting deviceUUID: $deviceUUID
       - name: Boot the device with the UUID of the previous step
@@ -101,13 +101,13 @@ jobs:
           default=IRShowcaseMVP
           echo $default | cat >default
           echo Using scheme: $default
-      - name: Find and boot the iPhone 15
+      - name: Find and boot the iPhone 16
         run: |
           # Using xcrun to find the list of devices
           # Choose first device available on the host
           #device=`xcrun xctrace list devices 2>&1 | grep -oE 'iPhone.*?[^\(]+' | head -1 | awk '{$1=$1;print}' | sed -e "s/ Simulator$//"`
-          device='iPhone 15'
-          deviceUUID=$(xcrun xctrace list devices 2>&1 | grep -o "iPhone 15 Simulator [^&]*" | head -1 | awk '{print $5}' | tr -d "()")
+          device='iPhone 16'
+          deviceUUID=$(xcrun xctrace list devices 2>&1 | grep -o "iPhone 16 Simulator [^&]*" | head -1 | awk '{print $5}' | tr -d "()")
           echo $deviceUUID | cat >deviceUUID
           echo Setting deviceUUID: $deviceUUID
       - name: Boot the device with the UUID of the previous step
